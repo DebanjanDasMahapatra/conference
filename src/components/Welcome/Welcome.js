@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import "./Welcome.css";
-
+import io from "socket.io-client";
+import axios from "axios";
+const ENDPOINT = "http://127.0.0.1:4001";
 
 const Welcome = () => {
+    const [response, setResponse] = useState("");
+
+    useEffect(() => {
+        axios.post('http://3ec2bed2.ngrok.io/createRoom').then(data => {
+            if(data.data.status) {
+                const socket = io('http://3ec2bed2.ngrok.io/'+data.data.roomId);
+                    console.error('Socket...',socket);
+                    socket.on("guest-request", data => {
+                        setResponse(data);
+                        console.log(data);
+                    });
+            } else {
+                console.log('Error in response',data.data);
+            }
+        }).catch(err => {
+            console.log('Error in axios',err);
+        })
+    }, []);
+
     return <React.Fragment>
         <div className="block">
             <h3>New Meeting</h3>
