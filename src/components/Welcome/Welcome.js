@@ -8,9 +8,9 @@ const Welcome = () => {
     const [response, setResponse] = useState("");
 
     useEffect(() => {
-        axios.post('http://3ec2bed2.ngrok.io/createRoom').then(data => {
+        axios.post('http://localhost:3000/createRoom').then(data => {
             if(data.data.status) {
-                const socket = io('http://3ec2bed2.ngrok.io/'+data.data.roomId);
+                const socket = io('http://localhost:3000/'+data.data.data.roomId);
                     console.error('Socket...',socket);
                     socket.on("guest-request", data => {
                         setResponse(data);
