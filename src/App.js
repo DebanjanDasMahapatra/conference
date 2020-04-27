@@ -28,11 +28,10 @@ function App() {
   return (
     <div className="App">
       <Router>
-      <Switch>
-        <Route exact path={"/"} component={Welcome}></Route>
-        <Route exact path={"/join"} component={Meeting}></Route>
-      </Switch>
-    </Router>
+        <Route path="/" component={Welcome}></Route>
+{/*         
+        <Route path="/join" component={Meeting}></Route> */}
+        </Router>
     </div>
   );
 }

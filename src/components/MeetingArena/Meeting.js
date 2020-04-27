@@ -1,11 +1,12 @@
 import React from 'react';
 import "./Meeting.css";
 
-const Meeting = () => {
-    return <React.Fragment>
-        <h1>Meeting in Progress...</h1>
+const Meeting = (props) => {
+    console.log("masakkali ",props);
+    return <>
+        <h1>Meeting in Progress...{props.name}</h1>
         <div className="chatbox"></div>
-    </React.Fragment>;
+    </>;
 }
 
 export default Meeting;
