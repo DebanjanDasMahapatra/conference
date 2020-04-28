@@ -112,7 +112,13 @@ const joinRoom = async () => {
     alert('Hiii');
 }
 
-const Welcome = () => {
+let name = "";
+const test = (h) => {
+    name = "Avnish vs Mosquitoes"
+    h.push('/testing');
+}
+
+const Welcome = (props) => {
     const [response, setResponse] = useState("");
 
     useEffect(() => {
@@ -130,6 +136,7 @@ const Welcome = () => {
             <p id="pinfo" hidden></p>
             <button type="button" onClick={participantAllow} id="allow" hidden>Allow</button>
             <button type="button" onClick={participantDeny} id="deny" hidden>Deny</button>
+            <button onClick={() => {test(props.history)}}>CLick me</button>
         </div>
         <div className="block">
             <h3>Join Meeting</h3>
@@ -145,7 +152,7 @@ const Welcome = () => {
     <Route
     exact
     path="/testing"
-    render={(propas)=><Meeting {...propas} name={"Avnish"}/>}
+    render={(propas)=><Meeting {...propas} name={name}/>}
     />
     </>
     );
