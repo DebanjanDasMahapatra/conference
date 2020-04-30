@@ -4,3 +4,7 @@
     background: lavender;
     text-align: center;
 }
+
+.d-none {
+    display: none;
+}
