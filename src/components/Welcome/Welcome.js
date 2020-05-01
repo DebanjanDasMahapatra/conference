@@ -9,12 +9,35 @@ import {
 import "./Welcome.css";
 import io from "socket.io-client";
 import axios from "axios";
+import { makeStyles } from '@material-ui/core/styles';
+import TextField from '@material-ui/core/TextField';
+import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
 import { render } from '@testing-library/react';
 import Meeting from '../MeetingArena/Meeting';
+import { Config } from '../../config';
 
-let hostSocket;
+const useStyles = makeStyles((theme) => ({
+    root: {
+      '& > *': {
+        margin: theme.spacing(1),
+        width: '25ch',
+      },
+    },
+    root2: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        '& > *': {
+          margin: theme.spacing(1),
+          width: theme.spacing(16),
+          height: theme.spacing(16),
+        },
+      }
+}));
 
-let uname = "", mid = "", rk = "", meetingId = "", guestObj = {};
+let hostSocket, participantSocket;
+
+let uname = "", mid = "", rk = "";
 
 const changeUserName = (v) => {
     uname = v;
@@ -26,133 +49,173 @@ const changeRk = (v) => {
     rk = v;
 }
 
-const toggleViews = (v) => {
-    document.getElementById('allow').hidden = v;
-    document.getElementById('deny').hidden = v;
-    document.getElementById('pinfo').hidden = v;
-}
-
-const participantAllow = () => {
-    hostSocket.emit('guest-request-response', { 
-        status: true,
-        guestObj,
-        meetingId
+const createSocket = (roomId,guestObj,meetingId,history) => {
+    participantSocket = io(Config.apiUrl+roomId,{query:{
+        roomId: roomId,
+        userId: guestObj.guestId
+    }});
+    console.log('Socket...',participantSocket);
+    participantSocket.on("authenticate", auth => {
+        console.log(auth);
+        if(auth.status) {
+            credentials.creds = {
+                roomId, guestObj, meetingId
+            };
+            credentials.isHost = false;
+            credentials.status = true;
+            credentials.socket = participantSocket;
+            history.push('/meeting');
+        }
     });
-    toggleViews(true);
 }
 
-const participantDeny = () => {
-    hostSocket.emit('guest-request-response', { 
-        status: false,
-        guestObj,
-        meetingId
-    });
-    toggleViews(true);
+let credentials = {};
+
+const pingServer = (creds,history,setLoader) => {
+    let count = 0;
+    let interval = setInterval(async() => {
+        try {
+            let resp = await axios.get(Config.apiUrl+'checkReqStatus?'+
+                `guestId=${creds.guestObj.guestId}&meetingId=${creds.meetingId}`);
+            console.log(resp.data)
+            {
+                if(resp.data.status) {
+                    clearInterval(interval);
+                    createSocket(resp.data.roomId,resp.data.guestObj,creds.meetingId,history);
+                } else {
+                    clearInterval(interval);
+                    setLoader(false);
+                    alert('You were not allowed!!! Try joining again or ask the host for the room key!!!');
+                }
+            }
+            {
+                if(count < 5)
+                    count++;
+                else {
+                    clearInterval(interval);
+                    setLoader(false);
+                    alert('Request for Joining Timed Out !!! Try joining again or ask the host for the room key!!!');
+                }
+            }
+        } catch(err) {
+            console.error(err);
+            clearInterval(interval);
+        }
+    },4000);
 }
 
-const createRoom = async () => {
+const createRoom = async (history) => {
     try {
-        let data = await axios.post('http://localhost:3000/createRoom',{
+        let resp = await axios.post(Config.apiUrl+'createRoom',{
             username: uname
         });
-        if(data.data.status) {
-            hostSocket = io('http://localhost:3000/'+data.data.data.roomId,{query:{
-                roomId: data.data.data.roomId,
-                userId: data.data.data.host.hostId
+        if(resp.data.status) {
+            hostSocket = io(Config.apiUrl+resp.data.data.roomId,{query:{
+                roomId: resp.data.data.roomId,
+                userId: resp.data.data.host.hostId
             }});
-            console.log('Socket...',hostSocket,"\n\n",data.data);
-            document.getElementById('mid').innerHTML = "Meeting ID: "+data.data.data.meetingId+"<br>nRoom Key: "+data.data.data.roomKey;
+            console.log('Socket...',hostSocket);
             hostSocket.on("authenticate", auth => {
                 console.log(auth);
-            });
-            hostSocket.on("guest-request", greq => {
-                document.getElementById('pinfo').innerHTML = "Partipant Name: "+greq.guestName+" is asking permission to enter the meeting. Click Allow or Deny.";
-                console.log(greq);
-                guestObj = greq;
-                meetingId = data.data.data.meetingId;
-                toggleViews(false);
-            });
-            hostSocket.on("guest-joined", data => {
-                console.log(data);
+                if(auth.status) {
+                    credentials.creds = resp.data.data;
+                    credentials.isHost = true;
+                    credentials.status = true;
+                    credentials.socket = hostSocket;
+                    history.push('/meeting');
+                }
             });
         } else {
-            console.log('Error in response',data.data);
+            console.log('Error in response',resp.data);
         }
     } catch (err) {
         console.log('Error in axios',err);
     }
-    alert('Hiii');
 }
 
-const joinRoom = async () => {
+const joinRoom = async (history,setLoader,setMessage) => {
     try {
-        let data = await axios.post('http://localhost:3000/joinRoom',{
+        let resp = await axios.post(Config.apiUrl+'joinRoom',{
             username: uname,
             meetingId: mid,
             roomKey: rk == "" ? null : rk
         });
-        if(data.data.status) {
-            const socket2 = io('http://localhost:3000/'+data.data.data.roomId,{query:{
-                roomId: data.data.data.roomId,
-                userId: data.data.data.guestObj.guestId
-            }});
-            console.log('Socket...',socket2,"\n\n",data.data);
-            socket2.on("authenticate", data => {
-                console.log(data);
-            });
-            socket2.on("guest-permitted", data => {
-                console.log(data);
-            });
-        } else {
-            console.log('Error in response',data.data);
+        if(resp.data.status)
+            createSocket(resp.data.data.roomId,resp.data.data.guestObj,mid,history);
+        else {
+            setMessage("Wait till host admits you...");
+            pingServer(resp.data.data,history,setLoader);
         }
     } catch (err) {
         console.log('Error in axios',err);
     }
-    alert('Hiii');
 }
 
-let name = "";
-const test = (h) => {
-    name = "Avnish vs Mosquitoes"
-    h.push('/testing');
-}
+// let name = "";
+// const test = (h) => {
+//     name = "Avnish vs Mosquitoes"
+//     h.push('/meeting');
+// }
+// const test2 = (h,r) => {
+//     h(!r);
+// }
 
 const Welcome = (props) => {
-    const [response, setResponse] = useState("");
-
-    useEffect(() => {
-        console.warn("ALERT")
-    }, []);
+    const classes = useStyles();
+    const [loader, setLoader] = useState(false);
+    const [message, setMessage] = React.useState("");
 
     return(<> 
         <Route exact path="/">
-        <div className="block">
-            <h3>New Meeting</h3>
+        <div className={"block" + (!loader ? "" : " d-none")}>
+            <Paper elevation={4}>
+                <br />
+            <h1>New Meeting</h1>
             <p id="mid"></p>
-            <input type="text" placeholder="Your Username" onChange={($e)=>{changeUserName($e.target.value)}} />
+            <TextField id="outlined-basic" label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{changeUserName($e.target.value)}} />
             <br />
-            <button type="button" onClick={createRoom}>Create</button>
-            <p id="pinfo" hidden></p>
-            <button type="button" onClick={participantAllow} id="allow" hidden>Allow</button>
-            <button type="button" onClick={participantDeny} id="deny" hidden>Deny</button>
-            <button onClick={() => {test(props.history)}}>CLick me</button>
+            <br />
+            <Button variant="contained" color="primary" className={!loader ? "" : "d-none"} type="button" onClick={() => {
+                if(uname !== "") {
+                    setMessage("Starting meeting..."); 
+                    setLoader(true); createRoom(props.history)
+                }
+            }}>CREATE</Button>
+            <br />
+            <br />
+            </Paper>
         </div>
-        <div className="block">
-            <h3>Join Meeting</h3>
-            <input type="text" placeholder="Username" onChange={($e)=>{changeUserName($e.target.value)}} />
+        <div className={"block" + (!loader ? "" : " d-none")}>
+            <Paper elevation={4}>
+                <br />
+            <h1>Join Meeting</h1>
+            <TextField id="outlined-basic" label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{changeUserName($e.target.value)}} />
             <br />
-            <input type="text" placeholder="Meeting ID" onChange={($e)=>{changeMid($e.target.value)}} />
             <br />
-            <input type="password" placeholder="Room Key" onChange={($e)=>{changeRk($e.target.value)}} />
+            <TextField id="outlined-basic" label="Meeting ID" placeholder="Meeting ID" variant="outlined" onChange={($e)=>{changeMid($e.target.value)}} />
             <br />
-            <button type="button" onClick={joinRoom}>Join</button>
+            <br />
+            <TextField id="outlined-basic" label="Room Key" placeholder="Leave blank if not having" variant="outlined" onChange={($e)=>{changeRk($e.target.value)}} />
+            <br />
+            <br />
+            <Button variant="contained" color="secondary" className={!loader ? "" : "d-none"} type="button" onClick={() => {
+                if(uname !== "" && mid !== "") {
+                    setMessage("Joining.. please wait...");
+                    setLoader(true); joinRoom(props.history, setLoader, setMessage)
+                }
+            }}>JOIN</Button>
+            <br />
+            <br />
+            </Paper>
+        </div>
+        <div className={loader ? "" : "d-none"}>
+            <h1>{message}</h1>
         </div>
         </Route>
     <Route
     exact
-    path="/testing"
-    render={(propas)=><Meeting {...propas} name={name}/>}
+    path="/meeting"
+    render={(propas)=><Meeting {...propas} meetingData={credentials}/>}
     />
     </>
     );

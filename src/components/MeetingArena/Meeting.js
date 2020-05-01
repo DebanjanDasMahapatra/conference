@@ -1,4 +1,5 @@
 import React from 'react';
+import axios from "axios";
 import "./Meeting.css";
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
@@ -13,7 +14,14 @@ import VideocamIcon from '@material-ui/icons/Videocam';
 import VideocamOffIcon from '@material-ui/icons/VideocamOff';
 import NavigationIcon from '@material-ui/icons/Navigation';
 import Drawer from '@material-ui/core/Drawer';
+<<<<<<< HEAD
 import ChatArea from './chatArea/ChatArea';
+=======
+import Participant from './Participant/Participant';
+import { Config } from '../../config';
+import PT from "../../participants";
+
+>>>>>>> b793a2d1ea2a5ed45b797a827fe75eb25c48b0b5
 const colors = {
     'dark-grey':'#413535'
 }
@@ -66,11 +74,24 @@ const useStyles = makeStyles((theme) => ({
     drawerPaper: {
         width: drawerWidth,
     },
-  }));
+}));
+
+let hostSocket;
+
+const participantToggle = (value,guestObj,meetingId) => {
+    hostSocket.emit('guest-request-response', { 
+        status: value,
+        guestObj,
+        meetingId
+    });
+    
+}
 
 const Meeting = (props) => {
     const classes = useStyles();
-    console.log("masakkali ",props);
+    const [meetingId, setMeetingId] = React.useState("");
+    const [roomKey, setRoomKey] = React.useState("");
+    const [isHost, setIsHost] = React.useState(false);
 
     const [chatOpen, setChatOpen] = React.useState(false);
     const [participantsOpen, setParticipantsOpen] = React.useState(false);
@@ -91,9 +112,38 @@ const Meeting = (props) => {
             setParticipantsOpen(true);
         }
     }
+
+    React.useEffect(() => {
+        let init = async () => {
+            const {creds, isHost, status, socket} = props.meetingData;
+            if(status) {
+                hostSocket = socket;
+                setMeetingId(creds.meetingId);
+                try {
+                    let resp = await axios.get(Config.apiUrl+'roomGuests?'+`roomId=${creds.roomId}`);
+                    PT.people = resp.data.status == 1 ? resp.data.roomGuests : [];
+                } catch(err) {
+                    console.error(err);
+                }
+
+                if(isHost) {
+                    setIsHost(true);
+                    setRoomKey(creds.roomKey);
+                    hostSocket.on('guest-request', greq => {
+                        participantToggle(window.confirm("Partipant Name: "+greq.guestName+" is asking permission to enter the meeting. Allow?"),
+                        greq,creds.meetingId);
+                        console.log(greq);
+                    })
+                }
+            }
+        }
+        init();
+    },[]);
+
     return <>
     <div className="meeting-area">
         <div className={clsx((chatOpen||participantsOpen) && classes.mainShrink)}>
+<<<<<<< HEAD
             <h1>Meeting in Progress...{props.name}</h1>
             
         </div>
@@ -120,6 +170,11 @@ const Meeting = (props) => {
             Participants
         </Drawer>
         <div className="action-menu">
+=======
+            <h2 className={!isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}</h2>
+            <h2 className={isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}, Room Key: {roomKey}</h2>
+            <div className="action-menu">
+>>>>>>> b793a2d1ea2a5ed45b797a827fe75eb25c48b0b5
                 <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
                     <MicIcon />
                 </Fab>
@@ -152,6 +207,34 @@ const Meeting = (props) => {
                     Chat
                 </Fab>
             </div>
+<<<<<<< HEAD
+=======
+        </div>
+        <Drawer
+            className={classes.drawer}
+            variant="persistent"
+            anchor="right"
+            open={chatOpen}
+            classes={{
+            paper: classes.drawerPaper,
+            }}
+        >
+            Chat
+        </Drawer>
+        <Drawer
+            className={classes.drawer}
+            variant="persistent"
+            anchor="right"
+            open={participantsOpen}
+            classes={{
+            paper: classes.drawerPaper,
+            }}
+        >
+            Participants
+            <br />
+            <Participant />
+        </Drawer>
+>>>>>>> b793a2d1ea2a5ed45b797a827fe75eb25c48b0b5
       </div>
     
         
