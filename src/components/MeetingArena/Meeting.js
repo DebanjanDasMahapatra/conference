@@ -140,7 +140,8 @@ const Meeting = (props) => {
     return <>
     <div className="meeting-area">
         <div className={clsx((chatOpen||participantsOpen) && classes.mainShrink)}>
-            <h1>Meeting in Progress...{props.name}</h1>
+            <h2 className={!isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}</h2>
+            <h2 className={isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}, Room Key: {roomKey}</h2>
             
         </div>
         <Drawer
@@ -152,7 +153,7 @@ const Meeting = (props) => {
             paper: classes.drawerPaper,
             }}
         >
-            <ChatArea></ChatArea>
+            <ChatArea />
         </Drawer>
         <Drawer
             className={classes.drawer}
@@ -163,12 +164,10 @@ const Meeting = (props) => {
             paper: classes.drawerPaper,
             }}
         >
-            Participants
+            <Participant />
         </Drawer>
-        <div className="action-menu">
-            <h2 className={!isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}</h2>
-            <h2 className={isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}, Room Key: {roomKey}</h2>
-            <div className="action-menu">
+      </div>
+      <div className="action-menu">
                 <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
                     <MicIcon />
                 </Fab>
@@ -201,33 +200,6 @@ const Meeting = (props) => {
                     Chat
                 </Fab>
             </div>
-        </div>
-        <Drawer
-            className={classes.drawer}
-            variant="persistent"
-            anchor="right"
-            open={chatOpen}
-            classes={{
-            paper: classes.drawerPaper,
-            }}
-        >
-            Chat
-        </Drawer>
-        <Drawer
-            className={classes.drawer}
-            variant="persistent"
-            anchor="right"
-            open={participantsOpen}
-            classes={{
-            paper: classes.drawerPaper,
-            }}
-        >
-            Participants
-            <br />
-            <Participant />
-        </Drawer>
-      </div>
-    
         
         {/* <div className="chatbox"></div> */}
     </>;
