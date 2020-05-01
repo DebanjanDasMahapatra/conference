@@ -13,11 +13,12 @@ import VideocamIcon from '@material-ui/icons/Videocam';
 import VideocamOffIcon from '@material-ui/icons/VideocamOff';
 import NavigationIcon from '@material-ui/icons/Navigation';
 import Drawer from '@material-ui/core/Drawer';
+import ChatArea from './chatArea/ChatArea';
 const colors = {
     'dark-grey':'#413535'
 }
 const { innerWidth: windowWidth, innerHeight: windowHeight } = window;
-const drawerWidth = 240;
+const drawerWidth = 300;
 const useStyles = makeStyles((theme) => ({
     
     mic: {
@@ -94,7 +95,31 @@ const Meeting = (props) => {
     <div className="meeting-area">
         <div className={clsx((chatOpen||participantsOpen) && classes.mainShrink)}>
             <h1>Meeting in Progress...{props.name}</h1>
-            <div className="action-menu">
+            
+        </div>
+        <Drawer
+            className={classes.drawer}
+            variant="persistent"
+            anchor="right"
+            open={chatOpen}
+            classes={{
+            paper: classes.drawerPaper,
+            }}
+        >
+            <ChatArea></ChatArea>
+        </Drawer>
+        <Drawer
+            className={classes.drawer}
+            variant="persistent"
+            anchor="right"
+            open={participantsOpen}
+            classes={{
+            paper: classes.drawerPaper,
+            }}
+        >
+            Participants
+        </Drawer>
+        <div className="action-menu">
                 <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
                     <MicIcon />
                 </Fab>
@@ -127,29 +152,6 @@ const Meeting = (props) => {
                     Chat
                 </Fab>
             </div>
-        </div>
-        <Drawer
-            className={classes.drawer}
-            variant="persistent"
-            anchor="right"
-            open={chatOpen}
-            classes={{
-            paper: classes.drawerPaper,
-            }}
-        >
-            Chat
-        </Drawer>
-        <Drawer
-            className={classes.drawer}
-            variant="persistent"
-            anchor="right"
-            open={participantsOpen}
-            classes={{
-            paper: classes.drawerPaper,
-            }}
-        >
-            Participants
-        </Drawer>
       </div>
     
         
