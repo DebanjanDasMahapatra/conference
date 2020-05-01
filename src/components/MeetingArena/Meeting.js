@@ -91,8 +91,6 @@ const Meeting = (props) => {
 
     const [chatOpen, setChatOpen] = React.useState(false);
     const [participantsOpen, setParticipantsOpen] = React.useState(false);
-
-    let participants = [];
     
     const handleChatMenuClick = ()=>{
         if(chatOpen){
@@ -198,7 +196,7 @@ const Meeting = (props) => {
             }}
         >
             Participants
-
+            <br />
             <Participant />
         </Drawer>
       </div>

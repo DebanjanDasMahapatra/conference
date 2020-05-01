@@ -167,7 +167,7 @@ const Welcome = (props) => {
 
     return(<> 
         <Route exact path="/">
-        <div className={"block" + !loader ? "" : "d-none"}>
+        <div className={"block" + (!loader ? "" : " d-none")}>
             <Paper elevation={4}>
                 <br />
             <h1>New Meeting</h1>
@@ -185,7 +185,7 @@ const Welcome = (props) => {
             <br />
             </Paper>
         </div>
-        <div className={"block" + !loader ? "" : "d-none"}>
+        <div className={"block" + (!loader ? "" : " d-none")}>
             <Paper elevation={4}>
                 <br />
             <h1>Join Meeting</h1>
