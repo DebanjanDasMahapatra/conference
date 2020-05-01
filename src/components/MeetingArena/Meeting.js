@@ -14,14 +14,11 @@ import VideocamIcon from '@material-ui/icons/Videocam';
 import VideocamOffIcon from '@material-ui/icons/VideocamOff';
 import NavigationIcon from '@material-ui/icons/Navigation';
 import Drawer from '@material-ui/core/Drawer';
-<<<<<<< HEAD
 import ChatArea from './chatArea/ChatArea';
-=======
 import Participant from './Participant/Participant';
 import { Config } from '../../config';
 import PT from "../../participants";
 
->>>>>>> b793a2d1ea2a5ed45b797a827fe75eb25c48b0b5
 const colors = {
     'dark-grey':'#413535'
 }
@@ -143,7 +140,6 @@ const Meeting = (props) => {
     return <>
     <div className="meeting-area">
         <div className={clsx((chatOpen||participantsOpen) && classes.mainShrink)}>
-<<<<<<< HEAD
             <h1>Meeting in Progress...{props.name}</h1>
             
         </div>
@@ -170,11 +166,9 @@ const Meeting = (props) => {
             Participants
         </Drawer>
         <div className="action-menu">
-=======
             <h2 className={!isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}</h2>
             <h2 className={isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}, Room Key: {roomKey}</h2>
             <div className="action-menu">
->>>>>>> b793a2d1ea2a5ed45b797a827fe75eb25c48b0b5
                 <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
                     <MicIcon />
                 </Fab>
@@ -207,8 +201,6 @@ const Meeting = (props) => {
                     Chat
                 </Fab>
             </div>
-<<<<<<< HEAD
-=======
         </div>
         <Drawer
             className={classes.drawer}
@@ -234,7 +226,6 @@ const Meeting = (props) => {
             <br />
             <Participant />
         </Drawer>
->>>>>>> b793a2d1ea2a5ed45b797a827fe75eb25c48b0b5
       </div>
     
         
