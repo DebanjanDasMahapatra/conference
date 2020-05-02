@@ -12,22 +12,39 @@ import Avatar from '@material-ui/core/Avatar';
 import MenuIcon from '@material-ui/icons/Menu'
 import Drawer from '@material-ui/core/Drawer';
 import UserListDrawer from './UserListDrawer';
+import ChatBubble from './ChatBubble';
+
 
 const drawerWidth = 200;
+const parentDrawerWidth =300;
+const { innerWidth: windowWidth, innerHeight: windowHeight } = window;
 const useStyles = makeStyles((theme) => ({
     main: {
         height:'100%',
-        position:'absolute'
+        position:'fixed',
+        display: 'flex',
+        flexFlow: 'column'
         
     },
+    chatBodyArea:{
+      backgroundColor:"#fafafa",
+      flexGrow:1,
+      width:'100%',
+      padding:'5px'
+    },
+    chatBodyAreaIn:{
+      minHeight:'100%',
+      overflowY:'auto',
+      padding:10
+    },
     header: {
-      position:'absolute',
       top: 0,
-      display:'flex'
+      display:'flex',
+      width:295,
+      alignItems:'center'
         
     },
     footer: {
-        position:'absolute',
         bottom: 0
         
     },
@@ -91,6 +108,36 @@ const ChatArea = (props)=>{
       return (<Picker onEmojiClick={addEmoji} className={classes.emojiPanel}/>);
     }, areEqual);
 
+
+    let messages = [{
+      "type" : 1,
+      "name": "cat",
+      "message": "Hey there i'm alasddasdive, catch me!",
+      "timestamp":"10:30 pm",
+      "userId":"122"
+    },{
+      "type" : 0,
+      "name": "cat",
+      "message": "Hello! Good Morning!",
+      "timestamp":"10:30 Am",
+      "userId":"123"
+  }, {
+    "type" : 1,
+    "name": "dog",
+    "message": "Hey there i'm alive, catch me!",
+    "timestamp":"10:30 pm",
+    "userId":"124"
+  }];
+    const generateChatBox=(element)=>{
+      return messages.map((msg1) =>
+        React.cloneElement(element, {
+          key: msg1.userId,
+          msg:msg1
+        }),
+      );
+    }
+    
+
 return (
     <>
     <div id = "userListDrawer" className={clsx(userListOpen&&classes.userListOpened)}>
@@ -99,15 +146,24 @@ return (
     <div className={classes.main}>
     
     <div className={classes.header}>
-    <IconButton className={classes.iconButton} aria-label="menu" onClick={handleUserListOpenClick}>
+    <IconButton className={classes.iconButto} aria-label="menu" onClick={handleUserListOpenClick}>
         <MenuIcon />
       </IconButton>
+    <span style={{flex:1}}>User</span>
     <Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
-    <span>User</span>
- 
+    </div>
+
+
+
+    <div className={classes.chatBodyArea}>
+      <Paper elevation={3} className={classes.chatBodyAreaIn}>
+      {generateChatBox(<ChatBubble/>)}
+      
+      </Paper>
 
     </div>
-    <div>Body<br></br>This is</div>
+
+
     <div className={classes.footer}>
       {emojiOpen?<EmojiPicker/> :null}
     <Paper component="form" className={classes.root}>

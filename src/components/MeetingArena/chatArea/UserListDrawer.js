@@ -22,9 +22,10 @@ const useStyles = makeStyles((theme) => ({
     },
     header1:{
         display:'flex',
+        alignItems:'center'
     },
     header2:{
-        display:'flex',
+        marginLeft:10
     },
     
     main: {
@@ -125,13 +126,13 @@ const UserListDrawer = (props)=>{
         <div>
         <div className={classes.header}>    
              <div  className={classes.header1}>
-                <span style={{flex:1}}>User List</span>
+                <span style={{flex:1,marginLeft:33}}>Participants</span>
                 <IconButton className={classes.iconButton} aria-label="close" onClick={handleUserListOpenClick}>
                     <ClearSharpIcon />
                 </IconButton>
             </div>
                     
-            <div>
+            <div className={classes.header2}>
                 <Paper component="form" className={classes.root}>
                         <InputBase
                             className={classes.input}
