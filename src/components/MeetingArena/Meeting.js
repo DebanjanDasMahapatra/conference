@@ -18,6 +18,7 @@ import ChatArea from './chatArea/ChatArea';
 import Participant from './Participant/Participant';
 import { Config } from '../../config';
 import PT from "../../participants";
+import NotificationSystem from "react-notification-system";
 
 const colors = {
     'dark-grey':'#413535'
@@ -89,6 +90,7 @@ const Meeting = (props) => {
     const [meetingId, setMeetingId] = React.useState("");
     const [roomKey, setRoomKey] = React.useState("");
     const [isHost, setIsHost] = React.useState(false);
+    const notificationSystem = React.createRef();
 
     const [chatOpen, setChatOpen] = React.useState(false);
     const [participantsOpen, setParticipantsOpen] = React.useState(false);
@@ -110,6 +112,16 @@ const Meeting = (props) => {
         }
     }
 
+    const notify = (message) => {
+        notificationSystem.current.addNotification({
+            message,
+            level: 'warning',
+            callback: (v) => {
+                console.log('Notification button clicked!',v);
+            }
+        });
+    };
+
     React.useEffect(() => {
         let init = async () => {
             const {creds, isHost, status, socket} = props.meetingData;
@@ -129,6 +141,7 @@ const Meeting = (props) => {
                     hostSocket.on('guest-request', greq => {
                         participantToggle(window.confirm("Partipant Name: "+greq.guestName+" is asking permission to enter the meeting. Allow?"),
                         greq,creds.meetingId);
+                        notify("Partipant Name: "+greq.guestName);
                         console.log(greq);
                     })
                 }
@@ -167,6 +180,7 @@ const Meeting = (props) => {
             <Participant />
         </Drawer>
       </div>
+      <NotificationSystem ref={notificationSystem} />
       <div className="action-menu">
                 <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
                     <MicIcon />

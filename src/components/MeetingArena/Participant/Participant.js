@@ -4,6 +4,7 @@ import VideocamOff from '@material-ui/icons/VideocamOff';
 import PT from "../../../participants";
 import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
+import { Paper } from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -24,6 +25,7 @@ const Participant = () => {
         participants.map(participant => {
             return (
             <div className={classes.root} key={participant._id}>
+                <Paper>
             <Grid container spacing={1}>
                 <Grid item xs={8}>
                     {participant.guestName} {participant.isHost ? "(Host)" : ""}
@@ -34,7 +36,7 @@ const Participant = () => {
                 <Grid item xs={2}>
                 <VideocamOff/>
                 </Grid>
-            </Grid>
+            </Grid></Paper>
             </div>)
             })
         }
