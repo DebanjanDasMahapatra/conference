@@ -9,7 +9,7 @@ import PeopleIcon from '@material-ui/icons/People';
 import MicIcon from '@material-ui/icons/Mic';
 import SmsIcon from '@material-ui/icons/Sms';
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
-import MicOffIcon from '@material-ui/icons/MicOff';
+import Info from '@material-ui/icons/Info';
 import VideocamIcon from '@material-ui/icons/Videocam';
 import VideocamOffIcon from '@material-ui/icons/VideocamOff';
 import NavigationIcon from '@material-ui/icons/Navigation';
@@ -19,6 +19,8 @@ import Participant from './Participant/Participant';
 import { Config } from '../../config';
 import PT from "../../participants";
 import NotificationSystem from "react-notification-system";
+import { Button, Paper, IconButton } from '@material-ui/core';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 
 const colors = {
     'dark-grey':'#413535'
@@ -90,7 +92,9 @@ const Meeting = (props) => {
     const [meetingId, setMeetingId] = React.useState("");
     const [roomKey, setRoomKey] = React.useState("");
     const [isHost, setIsHost] = React.useState(false);
-    const notificationSystem = React.createRef();
+    const [open, setOpen] = React.useState(false);
+    const notificationSystem = React.useRef();
+    
 
     const [chatOpen, setChatOpen] = React.useState(false);
     const [participantsOpen, setParticipantsOpen] = React.useState(false);
@@ -112,17 +116,28 @@ const Meeting = (props) => {
         }
     }
 
-    const notify = (message) => {
+    const notify = (pname,greq,meetingId) => {
         notificationSystem.current.addNotification({
-            message,
+            title: 'May I Come in?',
+            message: `Allow ${pname} to join?`,
+            autoDismiss: 15,
+            position: 'bl',
             level: 'warning',
-            callback: (v) => {
-                console.log('Notification button clicked!',v);
-            }
+            children: (
+                <>
+                    <Button color="primary" onClick={() => {
+                        participantToggle(true,greq,meetingId);
+                    }}>Allow</Button>
+                    <Button color="secondary" onClick={() => {
+                        participantToggle(false,greq,meetingId);
+                    }}>Deny</Button>
+                </>
+            )
         });
     };
 
     React.useEffect(() => {
+        console.log(notificationSystem.current.addNotification);
         let init = async () => {
             const {creds, isHost, status, socket} = props.meetingData;
             if(status) {
@@ -139,9 +154,7 @@ const Meeting = (props) => {
                     setIsHost(true);
                     setRoomKey(creds.roomKey);
                     hostSocket.on('guest-request', greq => {
-                        participantToggle(window.confirm("Partipant Name: "+greq.guestName+" is asking permission to enter the meeting. Allow?"),
-                        greq,creds.meetingId);
-                        notify("Partipant Name: "+greq.guestName);
+                        notify(greq.guestName,greq,creds.meetingId);
                         console.log(greq);
                     })
                 }
@@ -152,10 +165,29 @@ const Meeting = (props) => {
 
     return <>
     <div className="meeting-area">
-        <div className={clsx((chatOpen||participantsOpen) && classes.mainShrink)}>
-            <h2 className={!isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}</h2>
-            <h2 className={isHost ? "" : "d-none"}>Meeting in Progress... ID: {meetingId}, Room Key: {roomKey}</h2>
-            
+        <div className={clsx((chatOpen||participantsOpen) && classes.mainShrink)} className="info-meeting">
+            <IconButton onClick={() => {setOpen(true)}}>
+                <Info />
+            </IconButton>
+            <Dialog
+                open={open}
+                onClose={() => {setOpen(false)}}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">Meeting Details</DialogTitle>
+                <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                    Meeting Title<br />Meeting ID: <b>{meetingId}</b><br />
+                    <span className={isHost ? "" : "d-none"}>Room Key: <b>{roomKey}</b></span>
+                </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                <Button onClick={() => {setOpen(false)}} color="primary" autoFocus>
+                    Ok
+                </Button>
+                </DialogActions>
+            </Dialog>
         </div>
         <Drawer
             className={classes.drawer}
@@ -180,7 +212,7 @@ const Meeting = (props) => {
             <Participant />
         </Drawer>
       </div>
-      <NotificationSystem ref={notificationSystem} />
+      <NotificationSystem  ref={notificationSystem} />
       <div className="action-menu">
                 <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
                     <MicIcon />

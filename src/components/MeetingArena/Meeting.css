@@ -5,6 +5,10 @@
     text-align: center;
 }
 
+.info-meeting {
+    text-align: left;
+}
+
 .d-none {
     display: none;
 }

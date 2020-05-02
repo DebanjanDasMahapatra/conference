@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
     BrowserRouter as Router,
     Route,
@@ -16,6 +16,7 @@ import Paper from '@material-ui/core/Paper';
 import { render } from '@testing-library/react';
 import Meeting from '../MeetingArena/Meeting';
 import { Config } from '../../config';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -35,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
       }
 }));
 
-let hostSocket, participantSocket;
+let hostSocket, participantSocket, INTERVAL;
 
 let uname = "", mid = "", rk = "";
 
@@ -71,35 +72,27 @@ const createSocket = (roomId,guestObj,meetingId,history) => {
 
 let credentials = {};
 
-const pingServer = (creds,history,setLoader) => {
+const pingServer = (creds,history,setLoader,setMessage,setAlert) => {
     let count = 0;
-    let interval = setInterval(async() => {
+    INTERVAL = setInterval(async() => {
         try {
             let resp = await axios.get(Config.apiUrl+'checkReqStatus?'+
                 `guestId=${creds.guestObj.guestId}&meetingId=${creds.meetingId}`);
             console.log(resp.data)
-            {
-                if(resp.data.status) {
-                    clearInterval(interval);
-                    createSocket(resp.data.roomId,resp.data.guestObj,creds.meetingId,history);
-                } else {
-                    clearInterval(interval);
-                    setLoader(false);
-                    alert('You were not allowed!!! Try joining again or ask the host for the room key!!!');
-                }
+            if(resp.data.status) {
+                clearInterval(INTERVAL);
+                setMessage("Starting meeting...");
+                createSocket(resp.data.roomId,resp.data.guestObj,creds.meetingId,history);
             }
-            {
-                if(count < 5)
-                    count++;
-                else {
-                    clearInterval(interval);
-                    setLoader(false);
-                    alert('Request for Joining Timed Out !!! Try joining again or ask the host for the room key!!!');
-                }
+            else if(count < 5)
+                count++;
+            else {
+                clearInterval(INTERVAL);
+                setLoader(false);
+                setAlert(true);
             }
         } catch(err) {
             console.error(err);
-            clearInterval(interval);
         }
     },4000);
 }
@@ -133,7 +126,7 @@ const createRoom = async (history) => {
     }
 }
 
-const joinRoom = async (history,setLoader,setMessage) => {
+const joinRoom = async (history,setLoader,setMessage,setAlert) => {
     try {
         let resp = await axios.post(Config.apiUrl+'joinRoom',{
             username: uname,
@@ -144,25 +137,17 @@ const joinRoom = async (history,setLoader,setMessage) => {
             createSocket(resp.data.data.roomId,resp.data.data.guestObj,mid,history);
         else {
             setMessage("Wait till host admits you...");
-            pingServer(resp.data.data,history,setLoader);
+            pingServer(resp.data.data,history,setLoader,setMessage,setAlert);
         }
     } catch (err) {
         console.log('Error in axios',err);
     }
 }
 
-// let name = "";
-// const test = (h) => {
-//     name = "Avnish vs Mosquitoes"
-//     h.push('/meeting');
-// }
-// const test2 = (h,r) => {
-//     h(!r);
-// }
-
 const Welcome = (props) => {
     const classes = useStyles();
-    const [loader, setLoader] = useState(false);
+    const [loader, setLoader] = React.useState(false);
+    const [open, setOpen] = React.useState(false);
     const [message, setMessage] = React.useState("");
 
     return(<> 
@@ -172,7 +157,7 @@ const Welcome = (props) => {
                 <br />
             <h1>New Meeting</h1>
             <p id="mid"></p>
-            <TextField id="outlined-basic" label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{changeUserName($e.target.value)}} />
+            <TextField label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{changeUserName($e.target.value)}} />
             <br />
             <br />
             <Button variant="contained" color="primary" className={!loader ? "" : "d-none"} type="button" onClick={() => {
@@ -189,19 +174,19 @@ const Welcome = (props) => {
             <Paper elevation={4}>
                 <br />
             <h1>Join Meeting</h1>
-            <TextField id="outlined-basic" label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{changeUserName($e.target.value)}} />
+            <TextField label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{changeUserName($e.target.value)}} />
             <br />
             <br />
-            <TextField id="outlined-basic" label="Meeting ID" placeholder="Meeting ID" variant="outlined" onChange={($e)=>{changeMid($e.target.value)}} />
+            <TextField label="Meeting ID" placeholder="Meeting ID" variant="outlined" onChange={($e)=>{changeMid($e.target.value)}} />
             <br />
             <br />
-            <TextField id="outlined-basic" label="Room Key" placeholder="Leave blank if not having" variant="outlined" onChange={($e)=>{changeRk($e.target.value)}} />
+            <TextField label="Room Key" placeholder="Leave blank if not having" variant="outlined" onChange={($e)=>{changeRk($e.target.value)}} />
             <br />
             <br />
             <Button variant="contained" color="secondary" className={!loader ? "" : "d-none"} type="button" onClick={() => {
                 if(uname !== "" && mid !== "") {
                     setMessage("Joining.. please wait...");
-                    setLoader(true); joinRoom(props.history, setLoader, setMessage)
+                    setLoader(true); joinRoom(props.history, setLoader, setMessage, setOpen)
                 }
             }}>JOIN</Button>
             <br />
@@ -211,6 +196,24 @@ const Welcome = (props) => {
         <div className={loader ? "" : "d-none"}>
             <h1>{message}</h1>
         </div>
+        <Dialog
+            open={open}
+            onClose={() => {setOpen(false)}}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+        >
+            <DialogTitle id="alert-dialog-title">Request Timed Out!!!</DialogTitle>
+            <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+                Seems like you were not allowed. Try requesting again or ask the host for the Room Key.
+            </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+            <Button onClick={() => {setOpen(false)}} color="primary" autoFocus>
+                Ok
+            </Button>
+            </DialogActions>
+        </Dialog>
         </Route>
     <Route
     exact
