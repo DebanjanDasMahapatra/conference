@@ -1,10 +1,9 @@
 import React from "react";
 import VolumeOff from '@material-ui/icons/VolumeOff';
 import VideocamOff from '@material-ui/icons/VideocamOff';
-import PT from "../../../participants";
 import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
-import { Paper } from "@material-ui/core";
+import { Paper, ListItem, ListItemAvatar, ListItemText, ListItemSecondaryAction, IconButton, Avatar, List } from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -12,21 +11,16 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-const Participant = () => {
-
+const Participant = (props) => {
+    const {socket, participants} = props;
     const classes = useStyles();
-    const [participants, setParticipants] = React.useState([]);
-
-    React.useEffect(() => {
-        setParticipants(PT.people);
-    },[PT.people])
 
     return(<> {
         participants.map(participant => {
-            return (
-            <div className={classes.root} key={participant._id}>
-                <Paper>
-            <Grid container spacing={1}>
+            return (<List dense={false}>
+            <div key={participant.guestId}>
+                {/* <Paper>
+            <Grid item xs={12}>
                 <Grid item xs={8}>
                     {participant.guestName} {participant.isHost ? "(Host)" : ""}
                 </Grid>
@@ -36,8 +30,24 @@ const Participant = () => {
                 <Grid item xs={2}>
                 <VideocamOff/>
                 </Grid>
-            </Grid></Paper>
-            </div>)
+            </Grid></Paper> */}
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={participant.isHost ? participant.guestName+" (Host)" : participant.guestName}
+                  />
+                  <ListItemSecondaryAction>
+                    <IconButton edge="end">
+                        <VolumeOff/>
+                    </IconButton>
+                    <IconButton edge="end">
+                        <VideocamOff/>
+                    </IconButton>
+                  </ListItemSecondaryAction>
+                </ListItem>
+            </div></List>)
             })
         }
         {/* {

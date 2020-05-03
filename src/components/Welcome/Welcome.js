@@ -1,22 +1,16 @@
 import React from 'react';
 import {
     BrowserRouter as Router,
-    Route,
-    Switch,
-    Link,
-    useRouteMatch
+    Route
   } from "react-router-dom";
 import "./Welcome.css";
 import io from "socket.io-client";
 import axios from "axios";
 import { makeStyles } from '@material-ui/core/styles';
-import TextField from '@material-ui/core/TextField';
-import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
-import { render } from '@testing-library/react';
+import { TextField, Button, Paper } from '@material-ui/core';
 import Meeting from '../MeetingArena/Meeting';
 import { Config } from '../../config';
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, LinearProgress } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -38,19 +32,7 @@ const useStyles = makeStyles((theme) => ({
 
 let hostSocket, participantSocket, INTERVAL;
 
-let uname = "", mid = "", rk = "";
-
-const changeUserName = (v) => {
-    uname = v;
-}
-const changeMid = (v) => {
-    mid = v;
-}
-const changeRk = (v) => {
-    rk = v;
-}
-
-const createSocket = (roomId,guestObj,meetingId,history) => {
+const createSocket = (roomId,guestObj,meetingId,history,setLoader) => {
     participantSocket = io(Config.apiUrl+roomId,{query:{
         roomId: roomId,
         userId: guestObj.guestId
@@ -65,6 +47,8 @@ const createSocket = (roomId,guestObj,meetingId,history) => {
             credentials.isHost = false;
             credentials.status = true;
             credentials.socket = participantSocket;
+            credentials.parts = auth.guests;
+            setLoader(false);
             history.push('/meeting');
         }
     });
@@ -82,7 +66,7 @@ const pingServer = (creds,history,setLoader,setMessage,setAlert) => {
             if(resp.data.status) {
                 clearInterval(INTERVAL);
                 setMessage("Starting meeting...");
-                createSocket(resp.data.roomId,resp.data.guestObj,creds.meetingId,history);
+                createSocket(resp.data.roomId,resp.data.guestObj,creds.meetingId,history,setLoader);
             }
             else if(count < 5)
                 count++;
@@ -97,10 +81,10 @@ const pingServer = (creds,history,setLoader,setMessage,setAlert) => {
     },4000);
 }
 
-const createRoom = async (history) => {
+const createRoom = async (username,history,setLoader) => {
     try {
         let resp = await axios.post(Config.apiUrl+'createRoom',{
-            username: uname
+            username
         });
         if(resp.data.status) {
             hostSocket = io(Config.apiUrl+resp.data.data.roomId,{query:{
@@ -115,6 +99,8 @@ const createRoom = async (history) => {
                     credentials.isHost = true;
                     credentials.status = true;
                     credentials.socket = hostSocket;
+                    credentials.parts = auth.guests;
+                    setLoader(false);
                     history.push('/meeting');
                 }
             });
@@ -126,15 +112,15 @@ const createRoom = async (history) => {
     }
 }
 
-const joinRoom = async (history,setLoader,setMessage,setAlert) => {
+const joinRoom = async (username,mid,rk,history,setLoader,setMessage,setAlert) => {
     try {
         let resp = await axios.post(Config.apiUrl+'joinRoom',{
-            username: uname,
+            username,
             meetingId: mid,
             roomKey: rk == "" ? null : rk
         });
         if(resp.data.status)
-            createSocket(resp.data.data.roomId,resp.data.data.guestObj,mid,history);
+            createSocket(resp.data.data.roomId,resp.data.data.guestObj,mid,history,setLoader);
         else {
             setMessage("Wait till host admits you...");
             pingServer(resp.data.data,history,setLoader,setMessage,setAlert);
@@ -149,6 +135,9 @@ const Welcome = (props) => {
     const [loader, setLoader] = React.useState(false);
     const [open, setOpen] = React.useState(false);
     const [message, setMessage] = React.useState("");
+    const [uname, setUname] = React.useState("");
+    const [mid, setMid] = React.useState("");
+    const [rk, setRk] = React.useState("");
 
     return(<> 
         <Route exact path="/">
@@ -157,13 +146,13 @@ const Welcome = (props) => {
                 <br />
             <h1>New Meeting</h1>
             <p id="mid"></p>
-            <TextField label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{changeUserName($e.target.value)}} />
+            <TextField label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{setUname($e.target.value)}} />
             <br />
             <br />
             <Button variant="contained" color="primary" className={!loader ? "" : "d-none"} type="button" onClick={() => {
                 if(uname !== "") {
                     setMessage("Starting meeting..."); 
-                    setLoader(true); createRoom(props.history)
+                    setLoader(true); createRoom(uname,props.history, setLoader)
                 }
             }}>CREATE</Button>
             <br />
@@ -174,28 +163,40 @@ const Welcome = (props) => {
             <Paper elevation={4}>
                 <br />
             <h1>Join Meeting</h1>
-            <TextField label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{changeUserName($e.target.value)}} />
+            <TextField label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{setUname($e.target.value)}} />
             <br />
             <br />
-            <TextField label="Meeting ID" placeholder="Meeting ID" variant="outlined" onChange={($e)=>{changeMid($e.target.value)}} />
+            <TextField label="Meeting ID" placeholder="Meeting ID" variant="outlined" onChange={($e)=>{setMid($e.target.value)}} />
             <br />
             <br />
-            <TextField label="Room Key" placeholder="Leave blank if not having" variant="outlined" onChange={($e)=>{changeRk($e.target.value)}} />
+            <TextField label="Room Key" placeholder="Leave blank if not having" variant="outlined" onChange={($e)=>{setRk($e.target.value)}} />
             <br />
             <br />
             <Button variant="contained" color="secondary" className={!loader ? "" : "d-none"} type="button" onClick={() => {
                 if(uname !== "" && mid !== "") {
                     setMessage("Joining.. please wait...");
-                    setLoader(true); joinRoom(props.history, setLoader, setMessage, setOpen)
+                    setLoader(true); joinRoom(uname,mid,rk,props.history, setLoader, setMessage, setOpen)
                 }
-            }}>JOIN</Button>
+            }}>{rk == "" ? "REQUEST" : "JOIN"}</Button>
             <br />
             <br />
             </Paper>
         </div>
-        <div className={loader ? "" : "d-none"}>
+        <Dialog
+            open={loader}
+            aria-labelledby="alert-dialog-title2"
+            aria-describedby="alert-dialog-description2"
+        >
+            <DialogTitle id="alert-dialog-title2">Hold On!</DialogTitle>
+            <DialogContent>
+            <DialogContentText id="alert-dialog-description2">
             <h1>{message}</h1>
-        </div>
+            <LinearProgress />
+            </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+            </DialogActions>
+        </Dialog>
         <Dialog
             open={open}
             onClose={() => {setOpen(false)}}
