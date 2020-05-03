@@ -203,41 +203,41 @@ const Meeting = (props) => {
         >
             <Participant participants={participants} socket={socket}/>
         </Drawer>
-      </div>
-      <NotificationSystem  ref={notificationSystem} />
-      <div className="action-menu">
-                <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
-                    <MicIcon />
-                </Fab>
-                <Fab size="small" color="primary" aria-label="add" className={classes.cam}>
-                    <VideocamIcon />
-                </Fab>
-                <Fab size="small" color="primary" aria-label="add" className={classes.invite}>
-                    <PersonAddIcon />
-                </Fab>
-                <Fab
-                    variant="extended"
-                    size="medium"
-                    color="primary"
-                    aria-label="add"
-                    className={classes.participants}
-                    onClick={handleParticipantsMenuClick}
-                    >
-                    <PeopleIcon className={classes.extendedIcon} />
-                    Participants
-                </Fab>
-                <Fab
-                    variant="extended"
-                    size="medium"
-                    color="primary"
-                    aria-label="add"
-                    className={classes.chat}
-                    onClick={handleChatMenuClick}
-                    >
-                    <SmsIcon className={classes.extendedIcon} />
-                    Chat
-                </Fab>
-            </div>
+        </div>
+        <NotificationSystem  ref={notificationSystem} />
+        <div className="action-menu">
+            <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
+                <MicIcon />
+            </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={classes.cam}>
+                <VideocamIcon />
+            </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={classes.invite}>
+                <PersonAddIcon />
+            </Fab>
+            <Fab
+                variant="extended"
+                size="medium"
+                color="primary"
+                aria-label="add"
+                className={classes.participants}
+                onClick={handleParticipantsMenuClick}
+                >
+                <PeopleIcon className={classes.extendedIcon} />
+                Participants
+            </Fab>
+            <Fab
+                variant="extended"
+                size="medium"
+                color="primary"
+                aria-label="add"
+                className={classes.chat}
+                onClick={handleChatMenuClick}
+                >
+                <SmsIcon className={classes.extendedIcon} />
+                Chat
+            </Fab>
+        </div>
     </>;
 }
 
