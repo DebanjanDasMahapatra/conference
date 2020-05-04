@@ -2,13 +2,8 @@ import React from 'react';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
 
-
-import ListItem from '@material-ui/core/ListItem';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListItemText from '@material-ui/core/ListItemText';
-import Avatar from '@material-ui/core/Avatar';
 import MailIcon from '@material-ui/icons/Mail';
-import Badge from '@material-ui/core/Badge';
+import { ListItem, ListItemAvatar, ListItemText, Avatar, Badge } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
     header: {
@@ -23,9 +18,6 @@ const useStyles = makeStyles((theme) => ({
 const UserListElm = (props)=>{
     const {user,open,key} = props;
     const classes = useStyles();
-    console.log(props,user,key);
-
-
 
     return (
         <ListItem>
@@ -35,8 +27,8 @@ const UserListElm = (props)=>{
             </ListItemAvatar>
 
             <ListItemText
-            primary={user.name}
-            secondary={true ? user.userType : null}
+            primary={user.guestName}
+            secondary={user.isHost ? 'Host' : ''}
             />
             {user.pendingMessageCount>0?
                 <Badge badgeContent={user.pendingMessageCount} color={user.pendingMessageCount>5?'error':'primary'}>

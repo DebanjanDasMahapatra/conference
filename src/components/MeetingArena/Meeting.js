@@ -190,7 +190,7 @@ const Meeting = (props) => {
             paper: classes.drawerPaper,
             }}
         >
-            <ChatArea />
+            <ChatArea participants={participants} socket={socket} />
         </Drawer>
         <Drawer
             className={classes.drawer}

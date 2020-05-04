@@ -7,10 +7,10 @@ import "./Welcome.css";
 import io from "socket.io-client";
 import axios from "axios";
 import { makeStyles } from '@material-ui/core/styles';
-import { TextField, Button, Paper } from '@material-ui/core';
+import { TextField, Button, Paper, CircularProgress } from '@material-ui/core';
 import Meeting from '../MeetingArena/Meeting';
 import { Config } from '../../config';
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, LinearProgress } from '@material-ui/core';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -37,9 +37,9 @@ const createSocket = (roomId,guestObj,meetingId,history,setLoader) => {
         roomId: roomId,
         userId: guestObj.guestId
     }});
-    console.log('Socket...',participantSocket);
+    // console.log('Socket...',participantSocket);
     participantSocket.on("authenticate", auth => {
-        console.log(auth);
+        // console.log(auth);
         if(auth.status) {
             credentials.creds = {
                 roomId, guestObj, meetingId
@@ -62,7 +62,7 @@ const pingServer = (creds,history,setLoader,setMessage,setAlert) => {
         try {
             let resp = await axios.get(Config.apiUrl+'checkReqStatus?'+
                 `guestId=${creds.guestObj.guestId}&meetingId=${creds.meetingId}`);
-            console.log(resp.data)
+            // console.log(resp.data)
             if(resp.data.status) {
                 clearInterval(INTERVAL);
                 setMessage("Starting meeting...");
@@ -91,9 +91,9 @@ const createRoom = async (username,history,setLoader) => {
                 roomId: resp.data.data.roomId,
                 userId: resp.data.data.host.hostId
             }});
-            console.log('Socket...',hostSocket);
+            // console.log('Socket...',hostSocket);
             hostSocket.on("authenticate", auth => {
-                console.log(auth);
+                // console.log(auth);
                 if(auth.status) {
                     credentials.creds = resp.data.data;
                     credentials.isHost = true;
@@ -149,11 +149,9 @@ const Welcome = (props) => {
             <TextField label="Username" placeholder="Username" variant="outlined" onChange={($e)=>{setUname($e.target.value)}} />
             <br />
             <br />
-            <Button variant="contained" color="primary" className={!loader ? "" : "d-none"} type="button" onClick={() => {
-                if(uname !== "") {
-                    setMessage("Starting meeting..."); 
-                    setLoader(true); createRoom(uname,props.history, setLoader)
-                }
+            <Button variant="contained" color="primary" disabled={uname == ""} type="button" onClick={() => {
+                setMessage("Starting meeting..."); 
+                setLoader(true); createRoom(uname,props.history, setLoader)
             }}>CREATE</Button>
             <br />
             <br />
@@ -172,11 +170,9 @@ const Welcome = (props) => {
             <TextField label="Room Key" placeholder="Leave blank if not having" variant="outlined" onChange={($e)=>{setRk($e.target.value)}} />
             <br />
             <br />
-            <Button variant="contained" color="secondary" className={!loader ? "" : "d-none"} type="button" onClick={() => {
-                if(uname !== "" && mid !== "") {
-                    setMessage("Joining.. please wait...");
-                    setLoader(true); joinRoom(uname,mid,rk,props.history, setLoader, setMessage, setOpen)
-                }
+            <Button variant="contained" color="secondary" disabled={uname == "" || mid == ""} type="button" onClick={() => {
+                setMessage("Joining.. please wait...");
+                setLoader(true); joinRoom(uname,mid,rk,props.history, setLoader, setMessage, setOpen)
             }}>{rk == "" ? "REQUEST" : "JOIN"}</Button>
             <br />
             <br />
@@ -191,7 +187,7 @@ const Welcome = (props) => {
             <DialogContent>
             <DialogContentText id="alert-dialog-description2">
             <h1>{message}</h1>
-            <LinearProgress />
+            <CircularProgress />
             </DialogContentText>
             </DialogContent>
             <DialogActions>
