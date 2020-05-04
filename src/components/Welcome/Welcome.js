@@ -48,6 +48,12 @@ const createSocket = (roomId,guestObj,meetingId,history,setLoader) => {
             credentials.status = true;
             credentials.socket = participantSocket;
             credentials.parts = auth.guests;
+            credentials.parts.splice(credentials.parts.length-1, 1);
+            credentials.parts.splice(0, 0, {
+                guestId: "meeting",
+                guestName: "EVERYONE",
+                isHost: false
+            });
             setLoader(false);
             history.push('/meeting');
         }
@@ -100,6 +106,11 @@ const createRoom = async (username,history,setLoader) => {
                     credentials.status = true;
                     credentials.socket = hostSocket;
                     credentials.parts = auth.guests;
+                    credentials.parts.splice(0, 1, {
+                        guestId: "meeting",
+                        guestName: "EVERYONE",
+                        isHost: false
+                    });
                     setLoader(false);
                     history.push('/meeting');
                 }
