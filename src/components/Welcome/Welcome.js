@@ -56,8 +56,10 @@ const createSocket = (roomId,guestObj,meetingId,history) => {
         userId: guestObj.guestId
     }});
     console.log('Socket...',participantSocket);
+    
     participantSocket.on("authenticate", auth => {
         console.log(auth);
+        participantSocket.emit('authenticate',{'status':0,"msg":'im client'});
         if(auth.status) {
             credentials.creds = {
                 roomId, guestObj, meetingId
