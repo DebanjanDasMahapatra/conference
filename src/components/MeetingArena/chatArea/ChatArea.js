@@ -85,6 +85,8 @@ const useStyles = makeStyles((theme) => ({
   }));
 
 const ChatArea = (props)=>{
+  const {socket, participants} = props;
+  // console.warn("SUNO GAUR SE",participants);
   const [emojiOpen,setEmojiOpen] = React.useState(false);
   const [userListOpen,setUserListOpen] = React.useState(false);
 
@@ -141,7 +143,7 @@ const ChatArea = (props)=>{
 return (
     <>
     <div id = "userListDrawer" className={clsx(userListOpen&&classes.userListOpened)}>
-    <UserListDrawer handleUserListOpenClick={handleUserListOpenClick} open={userListOpen}/>
+    <UserListDrawer handleUserListOpenClick={handleUserListOpenClick} open={userListOpen} participants={participants}/>
     </div>
     <div className={classes.main}>
     

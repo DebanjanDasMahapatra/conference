@@ -3,23 +3,16 @@ import axios from "axios";
 import "./Meeting.css";
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
-import Fab from '@material-ui/core/Fab';
-import AddIcon from '@material-ui/icons/Add';
 import PeopleIcon from '@material-ui/icons/People';
 import MicIcon from '@material-ui/icons/Mic';
 import SmsIcon from '@material-ui/icons/Sms';
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
-import Info from '@material-ui/icons/Info';
 import VideocamIcon from '@material-ui/icons/Videocam';
-import VideocamOffIcon from '@material-ui/icons/VideocamOff';
-import NavigationIcon from '@material-ui/icons/Navigation';
-import Drawer from '@material-ui/core/Drawer';
+import Info from '@material-ui/icons/Info';
 import ChatArea from './chatArea/ChatArea';
 import Participant from './Participant/Participant';
-import { Config } from '../../config';
-import PT from "../../participants";
 import NotificationSystem from "react-notification-system";
-import { Button, Paper, IconButton } from '@material-ui/core';
+import { Button, IconButton, Drawer, Fab } from '@material-ui/core';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 
 const colors = {
@@ -88,17 +81,17 @@ const participantToggle = (value,guestObj,meetingId) => {
 }
 
 const Meeting = (props) => {
+    const {creds, isHost, status, socket, parts} = props.meetingData;
     const classes = useStyles();
+
     const [meetingId, setMeetingId] = React.useState("");
     const [roomKey, setRoomKey] = React.useState("");
-    const [isHost, setIsHost] = React.useState(false);
     const [open, setOpen] = React.useState(false);
-    const notificationSystem = React.useRef();
-    
-
+    const [participants, setParticipants] = React.useState(parts||[]);
+    const notificationSystem = React.useRef();    
     const [chatOpen, setChatOpen] = React.useState(false);
     const [participantsOpen, setParticipantsOpen] = React.useState(false);
-    
+    console.log("meeting.js in ",participants)
     const handleChatMenuClick = ()=>{
         if(chatOpen){
             setChatOpen(false);
@@ -135,32 +128,31 @@ const Meeting = (props) => {
             )
         });
     };
-
     React.useEffect(() => {
-        console.log(notificationSystem.current.addNotification);
-        let init = async () => {
-            const {creds, isHost, status, socket} = props.meetingData;
-            if(status) {
-                hostSocket = socket;
-                setMeetingId(creds.meetingId);
-                try {
-                    let resp = await axios.get(Config.apiUrl+'roomGuests?'+`roomId=${creds.roomId}`);
-                    PT.people = resp.data.status == 1 ? resp.data.roomGuests : [];
-                } catch(err) {
-                    console.error(err);
-                }
-
-                if(isHost) {
-                    setIsHost(true);
-                    setRoomKey(creds.roomKey);
-                    hostSocket.on('guest-request', greq => {
-                        notify(greq.guestName,greq,creds.meetingId);
-                        console.log(greq);
-                    })
-                }
+        if(status) {
+            hostSocket = socket;
+            hostSocket.on('new-user-added', nua => {
+                console.log(nua,"CHECK2",participants);
+                let newPart = {
+                    guestId: nua.userId,
+                    guestName: nua.name,
+                    isHost: false
+                };
+                setParticipants([...participants,newPart]);
+            });
+        }
+    },[participants]);
+    React.useEffect(() => {
+        if(status) {
+            setMeetingId(creds.meetingId);
+            if(isHost) {
+                setRoomKey(creds.roomKey);
+                hostSocket.on('guest-request', greq => {
+                    notify(greq.guestName,greq,creds.meetingId);
+                    console.log(greq);
+                })
             }
         }
-        init();
     },[]);
 
     return <>
@@ -198,7 +190,7 @@ const Meeting = (props) => {
             paper: classes.drawerPaper,
             }}
         >
-            <ChatArea />
+            <ChatArea participants={participants} socket={socket} />
         </Drawer>
         <Drawer
             className={classes.drawer}
@@ -209,45 +201,43 @@ const Meeting = (props) => {
             paper: classes.drawerPaper,
             }}
         >
-            <Participant />
+            <Participant participants={participants} socket={socket}/>
         </Drawer>
-      </div>
-      <NotificationSystem  ref={notificationSystem} />
-      <div className="action-menu">
-                <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
-                    <MicIcon />
-                </Fab>
-                <Fab size="small" color="primary" aria-label="add" className={classes.cam}>
-                    <VideocamIcon />
-                </Fab>
-                <Fab size="small" color="primary" aria-label="add" className={classes.invite}>
-                    <PersonAddIcon />
-                </Fab>
-                <Fab
-                    variant="extended"
-                    size="medium"
-                    color="primary"
-                    aria-label="add"
-                    className={classes.participants}
-                    onClick={handleParticipantsMenuClick}
-                    >
-                    <PeopleIcon className={classes.extendedIcon} />
-                    Participants
-                </Fab>
-                <Fab
-                    variant="extended"
-                    size="medium"
-                    color="primary"
-                    aria-label="add"
-                    className={classes.chat}
-                    onClick={handleChatMenuClick}
-                    >
-                    <SmsIcon className={classes.extendedIcon} />
-                    Chat
-                </Fab>
-            </div>
-        
-        {/* <div className="chatbox"></div> */}
+        </div>
+        <NotificationSystem  ref={notificationSystem} />
+        <div className="action-menu">
+            <Fab size="small" color="primary"  aria-label="add" className={classes.mic}>
+                <MicIcon />
+            </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={classes.cam}>
+                <VideocamIcon />
+            </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={classes.invite}>
+                <PersonAddIcon />
+            </Fab>
+            <Fab
+                variant="extended"
+                size="medium"
+                color="primary"
+                aria-label="add"
+                className={classes.participants}
+                onClick={handleParticipantsMenuClick}
+                >
+                <PeopleIcon className={classes.extendedIcon} />
+                Participants
+            </Fab>
+            <Fab
+                variant="extended"
+                size="medium"
+                color="primary"
+                aria-label="add"
+                className={classes.chat}
+                onClick={handleChatMenuClick}
+                >
+                <SmsIcon className={classes.extendedIcon} />
+                Chat
+            </Fab>
+        </div>
     </>;
 }
 

@@ -17,6 +17,7 @@ const ChatBubble = (props)=>{
                 <p className="message">{msg.message}</p>
                 <span className="timestamp">{msg.timestamp}</span>
                 </div>
+                
             </div>
 
     );

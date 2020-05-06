@@ -1,16 +1,11 @@
 import React from 'react';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
-import Paper from "@material-ui/core/Paper";
-import InputBase from "@material-ui/core/InputBase";
-import Divider from "@material-ui/core/Divider";
-import IconButton from "@material-ui/core/IconButton";
 import SearchIcon from "@material-ui/icons/Search";
 import SendIcon from '@material-ui/icons/Send';
 import ClearSharpIcon from '@material-ui/icons/ClearSharp';
 import MenuIcon from '@material-ui/icons/Menu'
-import List from '@material-ui/core/List';
-import Slide from '@material-ui/core/Slide';
+import { Slide, List, IconButton, Divider, InputBase, Paper } from '@material-ui/core';
 import UserListElm from './UserListElm';
 
 const drawerWidth = 200;
@@ -56,41 +51,19 @@ const useStyles = makeStyles((theme) => ({
   }));
 
 const UserListDrawer = (props)=>{
-    const {handleUserListOpenClick,open} = props;
-    let tempUser = [
-        {'name':"Avnish kummar",
-        'userId':'123',
-        'pendingMessageCount':1,
-        'displayPic':null,
-        'userType':'HOST'
-        },
-        {'name':"Mohit kummar",
-        'userId':'124',
-        'pendingMessageCount':0,
-        'displayPic':null,
-        'userType':'GUEST'
-        },
-        {'name':"Debanjan",
-        'userId':'125',
-        'pendingMessageCount':3,
-        'displayPic':null,
-        'userType':'GUEST'
-        },
-        {'name':"Alka Prasad",
-        'userId':'126',
-        'pendingMessageCount':15,
-        'displayPic':null,
-        'userType':'GUEST'
-        },
-        {'name':"Abhishek Das",
-        'userId':'127',
-        'pendingMessageCount':0,
-        'displayPic':null,
-        'userType':'GUEST'
-        },
-    ]
-    const [userList,setUserList] = React.useState(tempUser);
-    const [filteredUserList,setFilteredUserList] = React.useState(tempUser);
+    const {handleUserListOpenClick,open,participants} = props;
+    // console.warn("DUNIYA WALO",participants);
+    for(let i=0;i<participants.length;i++) {
+        participants[i].pendingMessageCount = Math.floor(Math.random()*10);
+        participants[i].displayPic = null;
+    }
+    const [userList,setUserList] = React.useState(participants);
+    const [filteredUserList,setFilteredUserList] = React.useState(participants);
+    React.useEffect(() => {
+        setUserList(participants);
+        setFilteredUserList(participants);
+        // console.error("SHAITAAN",filteredUserList);
+    },[participants])
     const classes = useStyles();
 
     const [selectedIndex, setSelectedIndex] = React.useState(1);
@@ -101,7 +74,7 @@ const UserListDrawer = (props)=>{
         function generate(element) {
             return filteredUserList.map((user) =>
               React.cloneElement(element, {
-                key: user.userId,
+                key: user.guestId,
                 user:user
               }),
             );
@@ -118,7 +91,7 @@ const UserListDrawer = (props)=>{
                   });
                   setFilteredUserList(fUser);
               }
-              console.log(filteredUserList)
+            //   console.log(filteredUserList)
           }
 
     return (
