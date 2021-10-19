@@ -17,8 +17,7 @@ const Participant = (props) => {
 
     return(<> {
         participants.map(participant => {
-            return (<List dense={false}>
-            <div key={participant.guestId}>
+            return (<List dense={false} key={participant.guestId}>
                 <ListItem>
                   <ListItemAvatar>
                     <Avatar />
@@ -35,7 +34,7 @@ const Participant = (props) => {
                     </IconButton>
                   </ListItemSecondaryAction>
                 </ListItem>
-            </div></List>)
+            </List>)
             })
         }
     </>

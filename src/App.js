@@ -1,39 +1,27 @@
 import React from 'react';
-import './App.css';
-import {
-  BrowserRouter as Router,
-  Route,
-  Switch,
-  Link,
-  useRouteMatch
-} from "react-router-dom";
+import { BrowserRouter as Router, Route } from "react-router-dom";
 import Welcome from './components/Welcome/Welcome.js';
-import Meeting from './components/MeetingArena/Meeting.js';
+import { createMuiTheme, MuiThemeProvider, useMediaQuery } from '@material-ui/core';
 
-const MyLink = ({ label, to, activeOnlyWhenExact }) => {
-  let match = useRouteMatch({
-    path: to,
-    strict: true,
-    sensitive: true
-  });
+const App = () => {
 
-  return (
-    <Link to={to}>
-      {" "}{label}{" "}
-    </Link>
+  console.clear();
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const theme = React.useMemo(() =>
+    createMuiTheme({
+      palette: {
+        type: prefersDarkMode ? 'dark' : 'light',
+      },
+    }),
+    [prefersDarkMode],
   );
-};
 
-function App() {
-  return (
-    <div className="App">
-      <Router>
-        <Route path="/" component={Welcome}></Route>
-{/*         
-        <Route path="/join" component={Meeting}></Route> */}
-        </Router>
-    </div>
-  );
+  return <MuiThemeProvider theme={theme}>
+    <Router>
+      <Route path="/" render={(props) => <Welcome {...props} />} />
+    </Router>
+  </MuiThemeProvider>
+
 }
 
 export default App;

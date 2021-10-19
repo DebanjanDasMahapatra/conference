@@ -12,3 +12,10 @@
 .d-none {
     display: none;
 }
+
+.action-menu {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+}

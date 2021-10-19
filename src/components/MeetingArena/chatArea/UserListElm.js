@@ -7,35 +7,30 @@ import { ListItem, ListItemAvatar, ListItemText, Avatar, Badge } from '@material
 
 const useStyles = makeStyles((theme) => ({
     header: {
-      position:'absolute',
-      top: 0,
-      width:230
-        
+        position: 'absolute',
+        top: 0,
+        width: 230
+
+    },
+    userListItem: {
+        cursor: 'pointer'
     }
 }));
 
 
-const UserListElm = (props)=>{
-    const {user,open,key} = props;
+const UserListElm = (props) => {
+    const { user, selected, handleListItemClick } = props;
     const classes = useStyles();
 
-    return (
-        <ListItem>
-            <ListItemAvatar>
-                <Avatar>
-                </Avatar>
-            </ListItemAvatar>
-
-            <ListItemText
-            primary={user.guestName}
-            secondary={user.isHost ? 'Host' : ''}
-            />
-            {user.pendingMessageCount>0?
-                <Badge badgeContent={user.pendingMessageCount} color={user.pendingMessageCount>5?'error':'primary'}>
-                    <MailIcon />
-                </Badge>
-            :null}
-        </ListItem>)
-
+    return <ListItem className={classes.userListItem} onClick={(event) => { handleListItemClick(event, user.userId) }} key={user.userId} selected={selected}>
+        <ListItemAvatar><Avatar /></ListItemAvatar>
+        <ListItemText primary={user.name} secondary={user.isHost ? 'Host' : ''} />
+        {user.pendingMessageCount > 0 ?
+            <Badge badgeContent={user.pendingMessageCount} color={user.pendingMessageCount > 5 ? 'error' : 'primary'}>
+                <MailIcon />
+            </Badge>
+            : null}
+    </ListItem>
 }
+
 export default UserListElm;
