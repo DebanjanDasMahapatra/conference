@@ -1,7 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Welcome from './components/Welcome/Welcome.js';
 import { createMuiTheme, MuiThemeProvider, useMediaQuery } from '@material-ui/core';
+import InitializeMeeting from './components/InitializeMeeting/InitializeMeeting.js';
 
 const App = () => {
 
@@ -18,7 +19,10 @@ const App = () => {
 
   return <MuiThemeProvider theme={theme}>
     <Router>
-      <Route path="/" render={(props) => <Welcome {...props} />} />
+      <Switch>
+      <Route exact path="/" render={(props) => <Welcome {...props} />} />
+      <Route exact path="/join/:meetingId" render={(propas) => <InitializeMeeting {...propas} />} />
+      </Switch>
     </Router>
   </MuiThemeProvider>
 

@@ -1,62 +1,26 @@
-.bubble {
-    width: 240px;
-    height: auto;
-    display: block;
-    box-shadow: 2px 8px 5px #000;
-    position: relative;
+.chat-message {
+    width: max-content;
+    max-width: 70% !important;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin: 5px;
 }
 
-.bubble.alt {
-    margin: 0 0 20px 37px;
+.others {
+    background: gainsboro;
+    color: black;
+    margin-left: 10px;
 }
 
-.bubble .txt {
-    padding: 8px 55px 8px 14px;
-}
-
-.bubble .txt .name {
-    text-align: left;
-    font-weight: 600;
-    font-size: 12px;
-    margin: 0 0 4px;
-    color: #3498db;
-}
-
-.bubble .txt .name span {
-    text-align: left;
-    font-weight: normal;
-    color: #b3b3b3;
-}
-
-.bubble .txt .name.alt {
-    text-align: left;
-    color: #2ecc71;
-}
-
-.bubble .txt .message {
-    text-align: left;
-    font-weight: 200;
-    color: #fff;
-    font-family: arial;
-    margin: 0;
-}
-
-.bubble .txt .timestamp {
-    font-size: 11px;
-    position: absolute;
-    bottom: 8px;
-    right: 10px;
+.self {
+    background: rgb(9, 168, 9);
     color: white;
-    text-transform: uppercase;
+    margin-left: auto;
+    margin-right: 10px;
+    text-align: right;
 }
 
-.sender {
-    background-color: #0ddb99;
-    border-bottom-left-radius: 20px;
-    margin-bottom: 20px;
-}
-
-.receiver {
-    background-color: #417eff;
-    border-bottom-right-radius: 20px;
+.sender-name {
+    padding: 5px 10px;
+    color: white;
 }

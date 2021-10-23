@@ -9,13 +9,25 @@
     text-align: left;
 }
 
-.d-none {
-    display: none;
-}
-
 .action-menu {
     position: fixed;
     left: 50%;
-    bottom: 0;
+    bottom: 1%;
     transform: translateX(-50%);
+}
+
+.new-message-animation {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
 }

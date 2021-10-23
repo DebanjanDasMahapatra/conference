@@ -51,16 +51,16 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const UserListDrawer = (props) => {
-    const { handleUserListOpenClick, open, userMap,
-        saveLastTypedMessage, handleUserChange, selectedUser, ownId } = props;
+    const { handleUserListOpenClick, open, userMap, saveLastTypedMessage, handleUserChange, selectedUser, ownId: userId} = props;
     const [userList, setUserList] = React.useState([]);
     const [filteredUserList, setFilteredUserList] = React.useState([]);
     const [oldUserMap, updateOlduserMap] = React.useState({});
+    
     React.useEffect(() => {
         let userIds = Object.keys(userMap);
         let userArray = [];
-        let newUserIds = userIds.filter(userId => {
-            return !oldUserMap.hasOwnProperty(userId) && userId != ownId;
+        let newUserIds = userIds.filter(uid => {
+            return !oldUserMap.hasOwnProperty(uid) && uid != userId;
         })
         newUserIds.forEach(userId => {
             updateOlduserMap({ ...oldUserMap, userIds: true })
@@ -68,7 +68,7 @@ const UserListDrawer = (props) => {
                 userId,
                 name: userMap[userId].name,
                 isHost: userMap[userId].isHost,
-                pendigMessageCount: userMap[userId].unreadMessages.length,
+                pendingMessageCount: userMap[userId].unreadMessages.length,
                 displayPic: userMap[userId].displayPic
             })
         })
@@ -80,6 +80,7 @@ const UserListDrawer = (props) => {
     // const [selectedIndex, setSelectedIndex] = React.useState(0);
 
     function handleListItemClick(event, clickedUserId) {
+        console.error("USER ID", clickedUserId, selectedUser)
         saveLastTypedMessage(selectedUser);
         handleUserChange(clickedUserId);
         handleUserListOpenClick();
@@ -107,7 +108,6 @@ const UserListDrawer = (props) => {
             });
             setFilteredUserList(fUser);
         }
-        //   console.log(filteredUserList)
     }
 
     return (

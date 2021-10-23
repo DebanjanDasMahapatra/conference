@@ -3,17 +3,16 @@ import axios from "axios";
 import "./Meeting.css";
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
-import PeopleIcon from '@material-ui/icons/People';
-import MicIcon from '@material-ui/icons/Mic';
-import SmsIcon from '@material-ui/icons/Sms';
-import PersonAddIcon from '@material-ui/icons/PersonAdd';
-import VideocamIcon from '@material-ui/icons/Videocam';
 import Info from '@material-ui/icons/Info';
 import ChatArea from './chatArea/ChatArea';
 import Participant from './Participant/Participant';
 import NotificationSystem from "react-notification-system";
-import { Button, IconButton, Drawer, Fab } from '@material-ui/core';
+import { Button, IconButton, Drawer, Fab, Typography } from '@material-ui/core';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { connect } from 'react-redux';
+import { ADD_PARTICIPANT_INFO, SET_SOCKET, UPDATE_MEETING_INFO } from '../../store/actionType';
+import { CallEnd, Mic, People, Person, Sms, Videocam } from '@material-ui/icons';
+import useSocketProofState from '../../utils/utils';
 
 const colors = {
     'dark-grey': '#413535'
@@ -23,7 +22,6 @@ const drawerWidth = 300;
 const useStyles = makeStyles((theme) => ({
     mic: {
         backgroundColor: colors["dark-grey"],
-
     },
     cam: {
         marginLeft: theme.spacing(2),
@@ -41,6 +39,10 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: theme.spacing(2),
         backgroundColor: "green"
     },
+    call: {
+        marginLeft: theme.spacing(2),
+        backgroundColor: "red"
+    },
     extendedIcon: {
         marginRight: theme.spacing(1),
     },
@@ -55,39 +57,31 @@ const useStyles = makeStyles((theme) => ({
     drawerPaper: {
         width: drawerWidth,
     },
+    dialogContent: {
+        padding: theme.spacing(4, 4, 2, 4)
+    },
+    dialogFooter: {
+        padding: theme.spacing(2, 4, 4, 4)
+    }
 }));
 
-let hostSocket;
-
-const participantToggle = (value, guestObj, meetingId) => {
-    hostSocket.emit('guest-request-response', {
-        status: value,
-        guestObj,
-        meetingId
-    });
-
-}
-
-const Meeting = (props) => {
-    const { creds, isHost, status, socket, parts } = props.meetingData;
+const Meeting = props => {
+    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, history } = props;
     const classes = useStyles();
 
-    const [meetingId, setMeetingId] = React.useState("");
-    const [roomKey, setRoomKey] = React.useState("");
-    const [participantId, setParticipantId] = React.useState("");
-    const [participantName, setParticipantName] = React.useState("");
     const [open, setOpen] = React.useState(false);
-    const [participants, setParticipants] = React.useState(parts || []);
     const notificationSystem = React.useRef();
-    const [chatOpen, setChatOpen] = React.useState(false);
+    const [chatOpen, setChatOpen, chatOpenRef] = useSocketProofState(false);
+    const [isPendingMessage, setMessagePending] = React.useState(false);
     const [participantsOpen, setParticipantsOpen] = React.useState(false);
-    console.log("meeting.js in ", participants)
+
     const handleChatMenuClick = () => {
         if (chatOpen) {
             setChatOpen(false);
         } else {
             setParticipantsOpen(false);
             setChatOpen(true);
+            setMessagePending(false);
         }
     }
     const handleParticipantsMenuClick = () => {
@@ -99,7 +93,15 @@ const Meeting = (props) => {
         }
     }
 
-    const notify = (pname, greq, meetingId) => {
+    const participantToggle = (value, guestObj, meetingId) => {
+        socket.emit('guest-request-response', {
+            status: value,
+            guestObj,
+            meetingId
+        });
+    }
+
+    const notify = (pname, greq) => {
         notificationSystem.current.addNotification({
             title: 'May I Come in?',
             message: `Allow ${pname} to join?`,
@@ -109,113 +111,136 @@ const Meeting = (props) => {
             children: (
                 <>
                     <Button color="primary" onClick={() => {
-                        participantToggle(true, greq, meetingId);
+                        participantToggle(true, greq, meetingInfo.meetingId);
                     }}>Allow</Button>
                     <Button color="secondary" onClick={() => {
-                        participantToggle(false, greq, meetingId);
+                        participantToggle(false, greq, meetingInfo.meetingId);
                     }}>Deny</Button>
                 </>
             )
         });
-    };
+    }
+
+    const leaveMeeting = () => {
+        console.warn('Meeting Left');
+        socket.disconnect();
+        history.push('/');
+    }
+
     React.useEffect(() => {
-        if (status) {
-            hostSocket = socket;
-            hostSocket.on('new-user-added', nua => {
-                console.log(nua, "CHECK2", participants);
-                let newPart = {
-                    guestId: nua.userId,
-                    guestName: nua.name,
-                    isHost: false
-                };
-                setParticipants([...participants, newPart]);
+        if (meetingInfo.status) {
+            socket.on('new-user-added', user => {
+                console.log(user, "CHECK2", participants);
+                if (meetingInfo.userId != user.userId) {
+                    let newPart = {
+                        guestId: user.userId,
+                        guestName: user.name,
+                        isHost: false
+                    };
+                    addParticipants([newPart]);
+                    socket.emit('join-personal-room', {
+                        ownId: meetingInfo.userId,
+                        userId: user.userId
+                    });
+                }
             });
         }
-    }, [participants]);
+    }, []);
+
     React.useEffect(() => {
-        if (status) {
-            setMeetingId(creds.meetingId);
-            if (isHost) {
-                setRoomKey(creds.roomKey);
-                setParticipantId(creds.host.hostId);
-                setParticipantName(creds.host.hostName);
-                hostSocket.on('guest-request', greq => {
-                    notify(greq.guestName, greq, creds.meetingId);
+        if (meetingInfo.status) {
+            if (meetingInfo.isHost) {
+                socket.on('guest-request', greq => {
+                    notify(greq.guestName, greq);
                     console.log(greq);
                 })
-            } else {
-                setParticipantId(creds.guestObj.guestId);
-                setParticipantName(creds.guestObj.guestName);
             }
         }
-    }, []);
+    }, [meetingInfo.isHost]);
 
     return <>
         <div className="meeting-area">
             <div className={clsx((chatOpen || participantsOpen) && classes.mainShrink)} className="info-meeting">
-                <IconButton onClick={() => { setOpen(true) }}>
-                    <Info />
-                </IconButton>
+                <IconButton onClick={() => { setOpen(true) }}><Info /></IconButton>
             </div>
-            <Drawer
-                className={classes.drawer}
-                variant="persistent"
-                anchor="right"
-                open={chatOpen}
-                classes={{
-                    paper: classes.drawerPaper,
-                }}
-            >
-                <ChatArea participants={participants} socket={socket} />
+            <Drawer className={classes.drawer} variant="persistent" anchor="right" open={chatOpen} classes={{ paper: classes.drawerPaper }}>
+                <ChatArea setMessagePending={setMessagePending} chatOpen={chatOpenRef} />
             </Drawer>
-            <Drawer
-                className={classes.drawer}
-                variant="persistent"
-                anchor="right"
-                open={participantsOpen}
-                classes={{
-                    paper: classes.drawerPaper,
-                }}
-            >
-                <Participant participants={participants} socket={socket} />
+            <Drawer className={classes.drawer} variant="persistent" anchor="right" open={participantsOpen} classes={{ paper: classes.drawerPaper }}>
+                <Participant />
             </Drawer>
         </div>
         <NotificationSystem ref={notificationSystem} />
         <div className="action-menu">
-        <Fab size="small" color="primary" aria-label="add" className={classes.mic}>
-            <MicIcon />
-        </Fab>
-        <Fab size="small" color="primary" aria-label="add" className={classes.cam}>
-            <VideocamIcon />
-        </Fab>
-        <Fab size="small" color="primary" aria-label="add" className={classes.invite}>
-            <PersonAddIcon />
-        </Fab>
-        <Fab size="small" color="primary" aria-label="add" className={classes.participants} onClick={handleParticipantsMenuClick}>
-            <PeopleIcon />
-        </Fab>
-        <Fab size="small" color="primary" aria-label="add" className={classes.chat} onClick={handleChatMenuClick}>
-            <SmsIcon />
-        </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={classes.mic}>
+                <Mic />
+            </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={classes.cam}>
+                <Videocam />
+            </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={classes.invite}>
+                <Person />
+            </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={classes.participants} onClick={handleParticipantsMenuClick}>
+                <People />
+            </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={clsx([classes.chat, isPendingMessage ? "new-message-animation" : ""])} onClick={handleChatMenuClick}>
+                <Sms />
+            </Fab>
+            <Fab size="small" color="primary" aria-label="add" className={classes.call} onClick={leaveMeeting}>
+                <CallEnd />
+            </Fab>
         </div>
         <Dialog open={open} onClose={() => { setOpen(false) }} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
-            <DialogTitle id="alert-dialog-title">Meeting Details</DialogTitle>
             <DialogContent>
-                Meeting Title<br />
-                <hr />
-                Participant Name: <b>{participantName}</b><br />
-                Participant ID: <b>{participantId}</b><br />
-                <hr />
-                Meeting ID: <b>{meetingId}</b><br />
-                {isHost && <>Room Key: <b>{roomKey}</b></>}
+                <div className={classes.dialogContent}>
+                    <Typography variant="h4" color="error">Meeting Title</Typography>
+                    <br />
+                    <Typography>Participant Name: <code>{meetingInfo.username} {meetingInfo.isHost && <span>(Host)</span>}</code></Typography>
+                    <br />
+                    <Typography>Participant ID: <code>{meetingInfo.userId}</code></Typography>
+                    <br />
+                    <Typography>Meeting ID: <code>{meetingInfo.meetingId}</code></Typography>
+                    <br />
+                    {meetingInfo.isHost && <Typography>Room Key: <code>{meetingInfo.roomKey}</code></Typography>}
+                </div>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={() => { setOpen(false) }} color="primary" autoFocus>
-                    Ok
-                </Button>
+            <DialogActions className={classes.dialogFooter}>
+                <Button onClick={() => setOpen(false)} color="default" variant="outlined">Close</Button>
             </DialogActions>
         </Dialog>
     </>;
 }
 
-export default Meeting;
+const mapStateToProps = (state) => {
+    return {
+        socket: state.socket,
+        meetingInfo: state.meetingInfo,
+        participants: state.participants
+    };
+}
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        setSocket: (socket) => {
+            dispatch({
+                type: SET_SOCKET,
+                socket
+            });
+        },
+        updateMeetingInfo: (meetingInfo) => {
+            dispatch({
+                type: UPDATE_MEETING_INFO,
+                meetingInfo
+            });
+        },
+        addParticipants: (participants) => {
+            dispatch({
+                type: ADD_PARTICIPANT_INFO,
+                participants
+            });
+        }
+    };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Meeting);
