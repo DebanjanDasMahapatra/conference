@@ -1,26 +1,42 @@
-.chat-message {
+.chat-box {
     width: max-content;
     max-width: 70% !important;
     padding: 5px 10px;
-    border-radius: 5px;
-    margin: 5px;
 }
 
 .others {
-    background: gainsboro;
-    color: black;
-    margin-left: 10px;
+    margin-right: auto;
 }
 
 .self {
-    background: rgb(9, 168, 9);
-    color: white;
     margin-left: auto;
-    margin-right: 10px;
     text-align: right;
 }
 
-.sender-name {
-    padding: 5px 10px;
+.self .chat-message {
+    background: rgb(9, 168, 9);
+    padding: 5px 8px;
+    border-radius: 5px;
+    margin: 5px 0 0 0;
     color: white;
+    text-align: left;
+}
+
+.others .chat-message {
+    background: gainsboro;
+    padding: 5px 8px;
+    border-radius: 5px;
+    margin: 5px 0 0 0;
+    color: black;
+}
+
+.sender-name {
+    padding: 5px;
+    font-size: small;
+    color: white;
+    margin-left: auto !important;
+}
+
+.time-stamp {
+    font-size: x-small;
 }

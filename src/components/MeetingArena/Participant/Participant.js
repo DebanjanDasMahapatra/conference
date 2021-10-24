@@ -23,7 +23,7 @@ const Participant = (props) => {
 				if(participant.guestId != 'everyone')
 				return (<List dense={true} key={participant.guestId}>
 					<ListItem>
-						<ListItemAvatar><Avatar>{participant.guestName.split(' ').map(word => word[0]).join('')}</Avatar></ListItemAvatar>
+						<ListItemAvatar><Avatar>{participant.guestName.split(' ').map(word => word[0].toUpperCase()).join('')}</Avatar></ListItemAvatar>
 						<ListItemText primary={participant.guestName + (participant.isHost ? " (Host)" : "")} />
 						<ListItemSecondaryAction>
 							<IconButton edge="end"><VolumeOff /></IconButton>

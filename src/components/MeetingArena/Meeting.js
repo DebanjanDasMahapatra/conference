@@ -1,5 +1,4 @@
 import React from 'react';
-import axios from "axios";
 import "./Meeting.css";
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
@@ -103,17 +102,17 @@ const Meeting = props => {
 
     const notify = (pname, greq) => {
         notificationSystem.current.addNotification({
-            title: 'May I Come in?',
-            message: `Allow ${pname} to join?`,
+            title: `${pname.toUpperCase()} is waiting outside the meeting...`,
+            message: `Allow ${pname.toUpperCase()} to join?`,
             autoDismiss: 15,
             position: 'bl',
-            level: 'warning',
+            level: 'info',
             children: (
                 <>
-                    <Button color="primary" onClick={() => {
+                    <Button variant="outlined" color="primary" onClick={() => {
                         participantToggle(true, greq, meetingInfo.meetingId);
                     }}>Allow</Button>
-                    <Button color="secondary" onClick={() => {
+                    <Button variant="outlined" color="secondary" onClick={() => {
                         participantToggle(false, greq, meetingInfo.meetingId);
                     }}>Deny</Button>
                 </>
@@ -123,10 +122,7 @@ const Meeting = props => {
 
     const leaveMeeting = () => {
         console.warn('Meeting Left');
-        socket.disconnect();
-        localStorage.clear();
-        resetReduxState();
-        history.push('/');
+        window.location.href = '/';
     }
 
     React.useEffect(() => {
@@ -252,7 +248,8 @@ const mapDispatchToProps = (dispatch) => {
         },
         resetReduxState: () => {
             dispatch({
-                type: RESET_ALL_INFO
+                type: RESET_ALL_INFO,
+                action: null
             });
         }
     };

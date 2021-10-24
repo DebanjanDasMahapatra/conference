@@ -90,8 +90,9 @@ const InitializeMeeting = props => {
     }, [userId]);
 
     const createSocket = (roomId, userId, username) => {
+        let time = Date.now();
         let newSocket = io(`${Config.apiUrl}${roomId}`, {
-            query: { roomId, userId }
+            query: { roomId, userId, time }
         });
         newSocket.on("authenticate", auth => {
             if (auth.status) {

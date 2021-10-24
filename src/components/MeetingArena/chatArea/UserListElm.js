@@ -25,7 +25,7 @@ const UserListElm = (props) => {
     return <ListItem className={classes.userListItem} onClick={(event) => { handleListItemClick(event, user.userId) }} key={user.userId} selected={selected}>
         <ListItemAvatar>
             <Badge badgeContent={user.pendingMessageCount} color={user.pendingMessageCount > 5 ? 'error' : 'primary'}>
-            <Avatar>{user.name.split(' ').map(word => word[0]).join('')}</Avatar>
+            <Avatar>{user.name.split(' ').map(word => word[0].toUpperCase()).join('')}</Avatar>
             </Badge>
         </ListItemAvatar>
         <ListItemText primary={user.name} secondary={user.isHost ? 'Host' : ''} />            

@@ -40,6 +40,7 @@ const useStyles = makeStyles((theme) => ({
 
 	},
 	footer: {
+		position: 'absolute',
 		bottom: 0
 
 	},
@@ -105,7 +106,7 @@ const ChatArea = (props) => {
 				'messages': [],
 				'unreadMessages': [],
 				'color': "INVALID",
-				'lastTypedMessage': "Hello",
+				'lastTypedMessage': "",
 				'displayPic': "",
 				'name': parti.guestName,
 				'isHost': parti.isHost
@@ -166,8 +167,7 @@ const ChatArea = (props) => {
 				'time': msgObj.time,
 				'sender': msgObj.from,
 				'message': msgObj.msg,
-				'type': 1,
-				'isOwn': msgObj.from == meetingInfo.userId,
+				'isOwn': false,
 				'senderName': participantMap[msgObj.from]
 			}];
 		else
@@ -175,11 +175,23 @@ const ChatArea = (props) => {
 				'time': msgObj.time,
 				'sender': msgObj.from,
 				'message': msgObj.msg,
-				'type': 1,
-				'isOwn': msgObj.from == meetingInfo.userId,
+				'isOwn': false,
 				'senderName': participantMap[msgObj.from]
 			}];
 		updateUserMap(userMapNew);
+	}
+
+	const handleOutgoingMessage = (time) => {
+		let userMapNew = { ...userMapRef.current };
+		userMapNew[selectedUser].messages = [...userMapNew[selectedUser].messages, {
+			time,
+			'sender': meetingInfo.userId,
+			message,
+			'isOwn': true,
+			'senderName': meetingInfo.username
+		}];
+		updateUserMap(userMapNew);
+		setMessage("");
 	}
 
 	const handleMessageAction = (msgObj) => {
@@ -191,37 +203,24 @@ const ChatArea = (props) => {
 		}
 	}
 
-	const sendMessageToUser = () => {
-		console.warn("PERSONAL MESSAGE >>>>");
-		socket.emit('personal-message', {
-			type: 1,
-			from: meetingInfo.userId,
-			to: selectedUser,
-			msg: message,
-			time: new Date().toLocaleString()
-		});
-		setMessage("");
-	}
-
-	const sendMessageToAll = () => {
-		console.warn("GROUP MESSAGE >>>>");
-		socket.emit('group-message', {
-			type: 1,
-			from: meetingInfo.userId,
-			to: selectedUser,
-			msg: message,
-			time: new Date().toLocaleString()
-		});
-		setMessage("");
-	}
-
 	const sendMessage = e => {
 		e.persist();
 		e.preventDefault();
-		if (selectedUser == 'everyone')
-			sendMessageToAll()
-		else
-			sendMessageToUser()
+		const messageChunk = {
+			type: 1,
+			from: meetingInfo.userId,
+			to: selectedUser,
+			msg: message,
+			time: new Date().toLocaleString()
+		}
+		if (selectedUser == 'everyone') {
+			console.warn("GROUP MESSAGE >>>>");
+			socket.emit('group-message', messageChunk);
+		} else {
+			console.warn("PERSONAL MESSAGE >>>>");
+			socket.emit('personal-message', messageChunk);
+		}
+		handleOutgoingMessage(messageChunk.time);
 	}
 
 	React.useEffect(() => {
