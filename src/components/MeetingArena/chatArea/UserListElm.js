@@ -22,14 +22,10 @@ const UserListElm = (props) => {
     const { user, selected, handleListItemClick } = props;
     const classes = useStyles();
 
-    React.useEffect(() => {
-        console.error("PENDING MESSAGE COUNT INFO", user.userId, user.pendingMessageCount);
-    },[user]);
-
     return <ListItem className={classes.userListItem} onClick={(event) => { handleListItemClick(event, user.userId) }} key={user.userId} selected={selected}>
         <ListItemAvatar>
             <Badge badgeContent={user.pendingMessageCount} color={user.pendingMessageCount > 5 ? 'error' : 'primary'}>
-                <Avatar />
+            <Avatar>{user.name.split(' ').map(word => word[0]).join('')}</Avatar>
             </Badge>
         </ListItemAvatar>
         <ListItemText primary={user.name} secondary={user.isHost ? 'Host' : ''} />            

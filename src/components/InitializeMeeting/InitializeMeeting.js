@@ -28,6 +28,12 @@ const useStyles = makeStyles((theme) => ({
     panel: {
         padding: theme.spacing(2),
         textAlign: 'center'
+    },
+    centerVertical: {
+        position: "absolute",
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)'
     }
 }));
 
@@ -84,12 +90,10 @@ const InitializeMeeting = props => {
     }, [userId]);
 
     const createSocket = (roomId, userId, username) => {
-        let newSocket = io(Config.apiUrl + roomId, {
+        let newSocket = io(`${Config.apiUrl}${roomId}`, {
             query: { roomId, userId }
         });
-        console.warn("Socket Created");
         newSocket.on("authenticate", auth => {
-            console.error("SOCKET AUTH INFO", auth);
             if (auth.status) {
                 newSocket["_ownId"] = userId;
                 newSocket["_ownName"] = username;
@@ -106,7 +110,6 @@ const InitializeMeeting = props => {
                 });
                 setTimeout(() => {
                     setMeetingValid(() => { 
-                        console.error("ADD PARTICIPANTS CALLED");
                         return true;
                     });
                 })
@@ -124,8 +127,8 @@ const InitializeMeeting = props => {
                     setRoomId(resp.data.roomId);
                     setHost(false);
                     localStorage.clear();
-                    localStorage.setItem(meetingInfo.meetingId, resp.data.data.guestObj.guestId);
-                    setUserId(resp.data.data.guestObj.guestId);
+                    localStorage.setItem(meetingInfo.meetingId, resp.data.guestObj.guestId);
+                    setUserId(resp.data.guestObj.guestId);
                     setMessage("Joining meeting...");
                 }
                 else if (count < 5)
@@ -167,12 +170,13 @@ const InitializeMeeting = props => {
     return <>
         {
             !isMeetingValid && loader && <>
-                <Grid container>
-                    <Grid item sm={2}></Grid>
-                    <Grid item sm={8} className={classes.panel}>
-                        <Paper elevation={4}>
+                <br /><br />
+                <Grid container className={classes.centerVertical}>
+                    <Grid item sm={3}></Grid>
+                    <Grid item sm={6}>
+                        <Paper elevation={10} className={classes.panel}>
                             <br />
-                            <Typography variant="h2">Hold On!</Typography>
+                            <Typography variant="h2" color="error">Hold On!</Typography>
                             <br /><br />
                             <Typography>{message}</Typography>
                             <br /><br />
@@ -180,7 +184,7 @@ const InitializeMeeting = props => {
                             <br />
                         </Paper>
                     </Grid>
-                    <Grid item sm={2}></Grid>
+                    <Grid item sm={3}></Grid>
                 </Grid>
             </>
         }
@@ -188,9 +192,9 @@ const InitializeMeeting = props => {
             isMeetingValid && !loader && <Meeting history={history} />
         }
         <Dialog open={open && !userId} aria-labelledby="alert-dialog-title2" aria-describedby="alert-dialog-description2">
-            <DialogTitle id="alert-dialog-title2">Join Meeting</DialogTitle>
             <DialogContent>
-                <p>Enter your Username and optionally a Room Key below to Request / Join.</p>
+                <Typography variant="h4" color="error">Join meeting</Typography>
+                <Typography>Enter your Username and optionally a Room Key below to Request / Join.</Typography>
                 <TextField label="Username" placeholder="Username" variant="standard" onChange={($e) => { setUsername($e.target.value) }} />
                 <br />
                 <br />

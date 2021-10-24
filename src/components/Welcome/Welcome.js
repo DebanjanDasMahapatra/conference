@@ -59,7 +59,7 @@ const Welcome = (props) => {
             <Grid container spacing={2}>
                 <Grid item sm={1}></Grid>
                 <Grid item sm={4}>
-                    <Paper elevation={4} className={classes.panel}>
+                    <Paper elevation={10} className={classes.panel}>
                         <Typography variant="h4" color="error">New Meeting</Typography>
                         <br />
                         <br />
@@ -76,7 +76,7 @@ const Welcome = (props) => {
                 </Grid>
                 <Grid item sm={2}></Grid>
                 <Grid item sm={4}>
-                    <Paper elevation={4} className={classes.panel}>
+                    <Paper elevation={10} className={classes.panel}>
                         <Typography variant="h4" color="error">Join Meeting</Typography>
                         <br />
                         <br />

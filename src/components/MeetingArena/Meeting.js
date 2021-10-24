@@ -10,9 +10,9 @@ import NotificationSystem from "react-notification-system";
 import { Button, IconButton, Drawer, Fab, Typography } from '@material-ui/core';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 import { connect } from 'react-redux';
-import { ADD_PARTICIPANT_INFO, SET_SOCKET, UPDATE_MEETING_INFO } from '../../store/actionType';
+import { ADD_PARTICIPANT_INFO, REMOVE_PARTICIPANT_INFO, RESET_ALL_INFO, SET_SOCKET, UPDATE_MEETING_INFO } from '../../store/actionType';
 import { CallEnd, Mic, People, Person, Sms, Videocam } from '@material-ui/icons';
-import useSocketProofState from '../../utils/utils';
+import useSocketProofState from '../../utils/socketProofState';
 
 const colors = {
     'dark-grey': '#413535'
@@ -58,15 +58,15 @@ const useStyles = makeStyles((theme) => ({
         width: drawerWidth,
     },
     dialogContent: {
-        padding: theme.spacing(4, 4, 2, 4)
+        padding: theme.spacing(2, 2, 1, 2)
     },
     dialogFooter: {
-        padding: theme.spacing(2, 4, 4, 4)
+        padding: theme.spacing(1, 2, 2, 2)
     }
 }));
 
 const Meeting = props => {
-    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, history } = props;
+    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, removeParticipant, resetReduxState, history } = props;
     const classes = useStyles();
 
     const [open, setOpen] = React.useState(false);
@@ -93,9 +93,9 @@ const Meeting = props => {
         }
     }
 
-    const participantToggle = (value, guestObj, meetingId) => {
+    const participantToggle = (status, guestObj, meetingId) => {
         socket.emit('guest-request-response', {
-            status: value,
+            status,
             guestObj,
             meetingId
         });
@@ -124,18 +124,19 @@ const Meeting = props => {
     const leaveMeeting = () => {
         console.warn('Meeting Left');
         socket.disconnect();
+        localStorage.clear();
+        resetReduxState();
         history.push('/');
     }
 
     React.useEffect(() => {
         if (meetingInfo.status) {
             socket.on('new-user-added', user => {
-                console.log(user, "CHECK2", participants);
                 if (meetingInfo.userId != user.userId) {
                     let newPart = {
                         guestId: user.userId,
                         guestName: user.name,
-                        isHost: false
+                        isHost: user.isHost
                     };
                     addParticipants([newPart]);
                     socket.emit('join-personal-room', {
@@ -143,6 +144,9 @@ const Meeting = props => {
                         userId: user.userId
                     });
                 }
+            });
+            socket.on('user-left', user => {
+                removeParticipant(user.userId);
             });
         }
     }, []);
@@ -238,6 +242,17 @@ const mapDispatchToProps = (dispatch) => {
             dispatch({
                 type: ADD_PARTICIPANT_INFO,
                 participants
+            });
+        },
+        removeParticipant: (participantId) => {
+            dispatch({
+                type: REMOVE_PARTICIPANT_INFO,
+                participantId
+            });
+        },
+        resetReduxState: () => {
+            dispatch({
+                type: RESET_ALL_INFO
             });
         }
     };

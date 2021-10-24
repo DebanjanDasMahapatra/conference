@@ -1,8 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import clsx from 'clsx';
-import { makeStyles } from '@material-ui/core/styles';
 import Paper from "@material-ui/core/Paper";
-import InputBase from "@material-ui/core/InputBase";
 import Divider from "@material-ui/core/Divider";
 import IconButton from "@material-ui/core/IconButton";
 import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
@@ -10,14 +8,13 @@ import SendIcon from '@material-ui/icons/Send';
 import Picker from 'emoji-picker-react';
 import Avatar from '@material-ui/core/Avatar';
 import MenuIcon from '@material-ui/icons/Menu'
-import Drawer from '@material-ui/core/Drawer';
 import UserListDrawer from './UserListDrawer';
-import ChatBubble from './ChatBubble';
 import ChatMessageArea from './ChatMessageArea';
 import { Badge, TextField } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { ADD_PARTICIPANT_INFO, SET_SOCKET, UPDATE_MEETING_INFO } from '../../../store/actionType';
-
+import useSocketProofState from '../../../utils/socketProofState';
+import { makeStyles } from '@material-ui/styles';
 
 const drawerWidth = 200;
 const parentDrawerWidth = 300;
@@ -83,30 +80,20 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ChatArea = (props) => {
-    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, setMessagePending, chatOpen } = props;
-	
-	const userMapRef = React.useRef({});
-	const [userMap, updateUserMap] = React.useState({});
+	const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, setMessagePending, chatOpen } = props;
 
+	const [userMap, updateUserMap, userMapRef] = useSocketProofState({});
+	const [selectedUser, setSelectedUser, selectedUserRef] = useSocketProofState("everyone");
 	const [emojiOpen, setEmojiOpen] = React.useState(false);
 	const [userListOpen, setUserListOpen] = React.useState(false);
-	const [selectedUser, setSelectedUser] = React.useState("everyone");
-	const selectedUserRef = React.useRef(selectedUser);
 	const [message, setMessage] = React.useState("");
+	const classes = useStyles();
 
 	const participantMap = React.useMemo(() => {
 		let map = {};
 		participants.forEach(part => map[part.guestId] = part.guestName);
 		return map;
 	}, [participants]);
-
-	React.useEffect(() => {
-		userMapRef.current = userMap;
-	}, [userMap]);
-
-	React.useEffect(() => {
-		selectedUserRef.current = selectedUser;
-	}, [selectedUser]);
 
 	React.useEffect(() => {
 		let userMap1 = { ...userMap };
@@ -124,40 +111,32 @@ const ChatArea = (props) => {
 				'isHost': parti.isHost
 			}
 		})
-		updateUserMap({...userMap1});
-		console.warn("UPDATED USER MAP", userMap1);
-	}, [participants])
-
-	// console.warn("SUNO GAUR SE",participants);
+		updateUserMap({ ...userMap1 });
+	}, [participants]);
 
 	const handleUserListOpenClick = () => {
 		setUserListOpen(!userListOpen);
 	}
 	const areEqual = (prevProps, nextProps) => true;
-	const classes = useStyles();
+
 	const addEmoji = (e, emojiObj) => {
 		setEmojiOpen(false);
 		setMessage(message + emojiObj.emoji);
-	};
+	}
+
 	const handleEmojiButtonClick = () => {
 		setEmojiOpen(!emojiOpen);
 	}
-	const handleInputChange = (e) => {
-		e.persist();
-		console.warn(e)
-		if (!e.shiftKey && e.code == 'Enter')
-			sendMessage();
-		else if (e.shiftKey && e.code == 'Enter')
-			setMessage(e.target.value + "\n");
-		else
-			setMessage(e.target.value);
-	}
+
 	const EmojiPicker = React.memo(props => {
 		return (<Picker onEmojiClick={addEmoji} className={classes.emojiPanel} />);
 	}, areEqual);
 
+	const handleInputChange = (e) => {
+		setMessage(e.target.value);
+	}
+
 	const handleUserChange = (userId) => {
-		console.warn("USER CHANGE", selectedUser, userId)
 		let userMapNew = { ...userMap };
 		setMessage(userMapNew[userId].lastTypedMessage);
 		userMapNew[userId].lastTypedMessage = "";
@@ -173,10 +152,8 @@ const ChatArea = (props) => {
 		updateUserMap(userMapNew);
 	}
 
-	console.warn("USER SELECTED", selectedUser)
 	const handleIncomingMessage = (msgObj) => {
-		if(!chatOpen.current) {
-			console.log("INCOMING ANIMATION")
+		if (!chatOpen.current) {
 			setMessagePending(true);
 		}
 		let userMapNew = { ...userMapRef.current };
@@ -184,7 +161,6 @@ const ChatArea = (props) => {
 		if (msgObj.to == 'everyone') {
 			msgBoxId = msgObj.to;
 		}
-		console.warn("USER INCOMING MESSAGE", selectedUserRef.current)
 		if (selectedUserRef.current == msgBoxId)
 			userMapNew[msgBoxId].messages = [...userMapNew[msgBoxId].messages, {
 				'time': msgObj.time,
@@ -239,7 +215,9 @@ const ChatArea = (props) => {
 		setMessage("");
 	}
 
-	const sendMessage = () => {
+	const sendMessage = e => {
+		e.persist();
+		e.preventDefault();
 		if (selectedUser == 'everyone')
 			sendMessageToAll()
 		else
@@ -247,22 +225,17 @@ const ChatArea = (props) => {
 	}
 
 	React.useEffect(() => {
-		console.error("USER MAP");
-		console.log(userMap);
 		socket.on('personal-message-reply', msg => {
 			console.warn("PM", msg);
-			console.log(userMap);
 			handleMessageAction(msg)
 		})
 		socket.on('group-message-reply', msg => {
 			console.warn("GM", msg);
-			console.log(userMap);
-			if(meetingInfo.userId != msg.from)
+			if (meetingInfo.userId != msg.from)
 				handleMessageAction(msg)
 		})
-	}, [])
+	}, []);
 
-	console.warn("USER MAP GLOBAL", userMap);
 	const totalUnreadCount = React.useMemo(() => {
 		return Object.keys(userMap).reduce((a, b) => a + userMap[b].unreadMessages.length, 0);
 	}, [userMap]);
@@ -275,10 +248,8 @@ const ChatArea = (props) => {
 		<div className={classes.main}>
 			<div className={classes.header}>
 				<IconButton className={classes.iconButto} aria-label="menu" onClick={handleUserListOpenClick}>
-				<Badge badgeContent={totalUnreadCount} color="primary">
-                <MenuIcon />
-            </Badge>
-					</IconButton>
+					<Badge badgeContent={totalUnreadCount} color="primary"><MenuIcon /></Badge>
+				</IconButton>
 				{userMap[selectedUser] ? <>
 					<span style={{ flex: 1 }}>{userMap[selectedUser].name}</span>
 					<Avatar alt={userMap[selectedUser].name} src="/static/images/avatar/1.jpg" />
@@ -290,14 +261,12 @@ const ChatArea = (props) => {
 				</div>
 			</> : <></>}
 			<div className={classes.footer}>
-				{emojiOpen ? <EmojiPicker /> : null}
-				<Paper component="form" className={classes.root}>
-					<IconButton className={classes.iconButton} aria-label="menu" onClick={handleEmojiButtonClick}>
-						<InsertEmoticonIcon color="secondary" />
-					</IconButton>
+				{emojiOpen && <EmojiPicker />}
+				<Paper component="form" className={classes.root} onSubmit={sendMessage}>
+					<IconButton className={classes.iconButton} aria-label="menu" onClick={handleEmojiButtonClick}><InsertEmoticonIcon /></IconButton>
 					<TextField className={classes.input} placeholder="Message" inputProps={{ "aria-label": "" }} onInput={handleInputChange} value={message} multiline={true} />
 					<Divider className={classes.divider} orientation="vertical" />
-					<IconButton color="secondary" className={classes.iconButton} aria-label="directions" onClick={sendMessage}><SendIcon /></IconButton>
+					<IconButton type="submit" color="default" className={classes.iconButton} aria-label="directions"><SendIcon /></IconButton>
 				</Paper>
 			</div>
 		</div>
@@ -305,34 +274,34 @@ const ChatArea = (props) => {
 }
 
 const mapStateToProps = (state) => {
-    return {
-        socket: state.socket,
-        meetingInfo: state.meetingInfo,
-        participants: state.participants
-    };
+	return {
+		socket: state.socket,
+		meetingInfo: state.meetingInfo,
+		participants: state.participants
+	};
 }
 
 const mapDispatchToProps = (dispatch) => {
-    return {
-        setSocket: (socket) => {
-            dispatch({
-                type: SET_SOCKET,
-                socket
-            });
-        },
-        updateMeetingInfo: (meetingInfo) => {
-            dispatch({
-                type: UPDATE_MEETING_INFO,
-                meetingInfo
-            });
-        },
-        addParticipants: (participants) => {
-            dispatch({
-                type: ADD_PARTICIPANT_INFO,
-                participants
-            });
-        }
-    };
+	return {
+		setSocket: (socket) => {
+			dispatch({
+				type: SET_SOCKET,
+				socket
+			});
+		},
+		updateMeetingInfo: (meetingInfo) => {
+			dispatch({
+				type: UPDATE_MEETING_INFO,
+				meetingInfo
+			});
+		},
+		addParticipants: (participants) => {
+			dispatch({
+				type: ADD_PARTICIPANT_INFO,
+				participants
+			});
+		}
+	};
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ChatArea);

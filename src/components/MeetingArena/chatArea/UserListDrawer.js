@@ -80,7 +80,6 @@ const UserListDrawer = (props) => {
     // const [selectedIndex, setSelectedIndex] = React.useState(0);
 
     function handleListItemClick(event, clickedUserId) {
-        console.error("USER ID", clickedUserId, selectedUser)
         saveLastTypedMessage(selectedUser);
         handleUserChange(clickedUserId);
         handleUserListOpenClick();
