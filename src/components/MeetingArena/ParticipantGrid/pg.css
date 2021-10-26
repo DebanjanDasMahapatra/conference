@@ -1,0 +1,5 @@
+.person-item {
+    height: 43vh !important;
+    color: white;
+    background-image: linear-gradient(to top right, #252525, #303030);
+}

@@ -1,18 +1,7 @@
-.chatbox {
-    width: 80;
-    padding: 5%;
-    background: lavender;
-    text-align: center;
-}
-
-.info-meeting {
-    text-align: left;
-}
-
 .action-menu {
     position: fixed;
     left: 50%;
-    bottom: 1%;
+    bottom: 2%;
     transform: translateX(-50%);
 }
 

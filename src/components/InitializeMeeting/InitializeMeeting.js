@@ -6,10 +6,15 @@ import { SET_SOCKET, UPDATE_MEETING_INFO, ADD_PARTICIPANT_INFO } from "../../sto
 import io from "socket.io-client";
 import axios from "axios";
 import { makeStyles } from '@material-ui/core/styles';
-import { TextField, Button, Paper, LinearProgress, Grid, Box, Typography } from '@material-ui/core';
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { TextField, Button, Paper, LinearProgress, Grid, Typography, Backdrop, CircularProgress } from '@material-ui/core';
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
+    backdrop: {
+      zIndex: theme.zIndex.appBar + 1,
+      color: '#fff',
+      position: 'fixed'
+    },
     root: {
         '& > *': {
             margin: theme.spacing(1),
@@ -52,6 +57,7 @@ const InitializeMeeting = props => {
     const [open, setOpen] = React.useState(false);
     const [isErrorAlert, setErrorAlert] = React.useState(false);
     const [userId, setUserId] = React.useState(null);
+    const [isConnected, setConnected] = React.useState(true);
 
     React.useEffect(() => {
         (async () => {
@@ -93,6 +99,12 @@ const InitializeMeeting = props => {
         let time = Date.now();
         let newSocket = io(`${Config.apiUrl}${roomId}`, {
             query: { roomId, userId, time }
+        });
+        newSocket.on('connect', () => {
+            setConnected(true);
+        })
+        newSocket.on('disconnect', reason => {
+            setConnected(false);
         });
         newSocket.on("authenticate", auth => {
             if (auth.status) {
@@ -169,6 +181,10 @@ const InitializeMeeting = props => {
     }
 
     return <>
+        <Backdrop className={classes.backdrop} open={!isConnected}>
+            <CircularProgress color="secondary" />
+            <Typography>Disconnected... We are tying to connect you back...</Typography>
+        </Backdrop>
         {
             !isMeetingValid && loader && <>
                 <br /><br />

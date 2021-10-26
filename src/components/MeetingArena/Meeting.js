@@ -10,8 +10,9 @@ import { Button, IconButton, Drawer, Fab, Typography } from '@material-ui/core';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { ADD_PARTICIPANT_INFO, REMOVE_PARTICIPANT_INFO, RESET_ALL_INFO, SET_SOCKET, UPDATE_MEETING_INFO } from '../../store/actionType';
-import { CallEnd, Mic, People, Person, Sms, Videocam } from '@material-ui/icons';
+import { CallEnd, Mic, People, PresentToAll, Sms, Videocam } from '@material-ui/icons';
 import useSocketProofState from '../../utils/socketProofState';
+import ParticipantGrid from './ParticipantGrid/ParticipantGrid';
 
 const colors = {
     'dark-grey': '#413535'
@@ -42,6 +43,12 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: theme.spacing(2),
         backgroundColor: "red"
     },
+    info: {
+        position: 'fixed',
+        marginLeft: theme.spacing(1),
+        marginTop: theme.spacing(1),
+        backgroundColor: "blueviolet"
+    },
     extendedIcon: {
         marginRight: theme.spacing(1),
     },
@@ -65,7 +72,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Meeting = props => {
-    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, removeParticipant, resetReduxState, history } = props;
+    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, removeParticipant, history } = props;
     const classes = useStyles();
 
     const [open, setOpen] = React.useState(false);
@@ -109,7 +116,7 @@ const Meeting = props => {
             level: 'info',
             children: (
                 <>
-                    <Button variant="outlined" color="primary" onClick={() => {
+                    <Button variant="outlined" onClick={() => {
                         participantToggle(true, greq, meetingInfo.meetingId);
                     }}>Allow</Button>
                     <Button variant="outlined" color="secondary" onClick={() => {
@@ -159,35 +166,36 @@ const Meeting = props => {
     }, [meetingInfo.isHost]);
 
     return <>
-        <div className="meeting-area">
-            <div className={clsx((chatOpen || participantsOpen) && classes.mainShrink)} className="info-meeting">
-                <IconButton onClick={() => { setOpen(true) }}><Info /></IconButton>
-            </div>
-            <Drawer className={classes.drawer} variant="persistent" anchor="right" open={chatOpen} classes={{ paper: classes.drawerPaper }}>
-                <ChatArea setMessagePending={setMessagePending} chatOpen={chatOpenRef} />
-            </Drawer>
-            <Drawer className={classes.drawer} variant="persistent" anchor="right" open={participantsOpen} classes={{ paper: classes.drawerPaper }}>
-                <Participant />
-            </Drawer>
+        <Fab size="small" color="primary" className={classes.info} onClick={() => { setOpen(true) }}>
+            <Info />
+        </Fab>
+        <div className={clsx((chatOpen || participantsOpen) && classes.mainShrink)}>
+            <ParticipantGrid />
         </div>
+        <Drawer className={classes.drawer} variant="persistent" anchor="right" open={chatOpen} classes={{ paper: classes.drawerPaper }}>
+            <ChatArea setMessagePending={setMessagePending} chatOpen={chatOpenRef} />
+        </Drawer>
+        <Drawer className={classes.drawer} variant="persistent" anchor="right" open={participantsOpen} classes={{ paper: classes.drawerPaper }}>
+            <Participant />
+        </Drawer>
         <NotificationSystem ref={notificationSystem} />
         <div className="action-menu">
-            <Fab size="small" color="primary" aria-label="add" className={classes.mic}>
+            <Fab size="small" color="primary" className={classes.mic}>
                 <Mic />
             </Fab>
-            <Fab size="small" color="primary" aria-label="add" className={classes.cam}>
+            <Fab size="small" color="primary" className={classes.cam}>
                 <Videocam />
             </Fab>
-            <Fab size="small" color="primary" aria-label="add" className={classes.invite}>
-                <Person />
+            <Fab size="small" color="primary" className={classes.invite}>
+                <PresentToAll />
             </Fab>
-            <Fab size="small" color="primary" aria-label="add" className={classes.participants} onClick={handleParticipantsMenuClick}>
+            <Fab size="small" color="primary" className={classes.participants} onClick={handleParticipantsMenuClick}>
                 <People />
             </Fab>
-            <Fab size="small" color="primary" aria-label="add" className={clsx([classes.chat, isPendingMessage ? "new-message-animation" : ""])} onClick={handleChatMenuClick}>
+            <Fab size="small" color="primary" className={clsx([classes.chat, isPendingMessage ? "new-message-animation" : ""])} onClick={handleChatMenuClick}>
                 <Sms />
             </Fab>
-            <Fab size="small" color="primary" aria-label="add" className={classes.call} onClick={leaveMeeting}>
+            <Fab size="small" color="primary" className={classes.call} onClick={leaveMeeting}>
                 <CallEnd />
             </Fab>
         </div>
@@ -244,12 +252,6 @@ const mapDispatchToProps = (dispatch) => {
             dispatch({
                 type: REMOVE_PARTICIPANT_INFO,
                 participantId
-            });
-        },
-        resetReduxState: () => {
-            dispatch({
-                type: RESET_ALL_INFO,
-                action: null
             });
         }
     };
