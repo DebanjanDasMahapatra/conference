@@ -10,11 +10,19 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #202020;
+  background-color: #353535;
   overflow-x: hidden;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.df {
+  flex-grow: 1 !important;
+}
+
+.ib {
+  margin-left: auto !important;
 }

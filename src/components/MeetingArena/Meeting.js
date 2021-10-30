@@ -13,6 +13,7 @@ import { ADD_PARTICIPANT_INFO, REMOVE_PARTICIPANT_INFO, RESET_ALL_INFO, SET_SOCK
 import { CallEnd, Mic, People, PresentToAll, Sms, Videocam } from '@material-ui/icons';
 import useSocketProofState from '../../utils/socketProofState';
 import ParticipantGrid from './ParticipantGrid/ParticipantGrid';
+import { CONFIGS } from '../../config';
 
 const colors = {
     'dark-grey': '#413535'
@@ -21,6 +22,7 @@ const { innerWidth: windowWidth, innerHeight: windowHeight } = window;
 const drawerWidth = 300;
 const useStyles = makeStyles((theme) => ({
     mic: {
+        marginLeft: theme.spacing(2),
         backgroundColor: colors["dark-grey"],
     },
     cam: {
@@ -44,9 +46,6 @@ const useStyles = makeStyles((theme) => ({
         backgroundColor: "red"
     },
     info: {
-        position: 'fixed',
-        marginLeft: theme.spacing(1),
-        marginTop: theme.spacing(1),
         backgroundColor: "blueviolet"
     },
     extendedIcon: {
@@ -72,7 +71,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Meeting = props => {
-    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, removeParticipant, history } = props;
+    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, removeParticipant } = props;
     const classes = useStyles();
 
     const [open, setOpen] = React.useState(false);
@@ -129,6 +128,8 @@ const Meeting = props => {
 
     const leaveMeeting = () => {
         console.warn('Meeting Left');
+        if(!CONFIGS.isSignedIn())
+            localStorage.clear();
         window.location.href = '/';
     }
 
@@ -166,9 +167,6 @@ const Meeting = props => {
     }, [meetingInfo.isHost]);
 
     return <>
-        <Fab size="small" color="primary" className={classes.info} onClick={() => { setOpen(true) }}>
-            <Info />
-        </Fab>
         <div className={clsx((chatOpen || participantsOpen) && classes.mainShrink)}>
             <ParticipantGrid />
         </div>
@@ -180,6 +178,9 @@ const Meeting = props => {
         </Drawer>
         <NotificationSystem ref={notificationSystem} />
         <div className="action-menu">
+            <Fab size="small" color="primary" className={classes.info} onClick={() => { setOpen(true) }}>
+                <Info />
+            </Fab>
             <Fab size="small" color="primary" className={classes.mic}>
                 <Mic />
             </Fab>

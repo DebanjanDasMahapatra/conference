@@ -1,10 +1,9 @@
 import React from "react";
 import { connect } from 'react-redux';
-import { Config } from "../../config";
+import { CONFIGS } from "../../config";
 import Meeting from "../MeetingArena/Meeting";
 import { SET_SOCKET, UPDATE_MEETING_INFO, ADD_PARTICIPANT_INFO } from "../../store/actionType";
 import io from "socket.io-client";
-import axios from "axios";
 import { makeStyles } from '@material-ui/core/styles';
 import { TextField, Button, Paper, LinearProgress, Grid, Typography, Backdrop, CircularProgress } from '@material-ui/core';
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@material-ui/core';
@@ -34,18 +33,24 @@ const useStyles = makeStyles((theme) => ({
         padding: theme.spacing(2),
         textAlign: 'center'
     },
+    dialog: {
+        padding: theme.spacing(6)
+    },
     centerVertical: {
         position: "absolute",
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)'
+    },
+    alignRight: {
+        textAlign: 'right'
     }
 }));
 
 const InitializeMeeting = props => {
 
     const classes = useStyles();
-    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, history } = props;
+    const { socket, meetingInfo, participants, setSocket, updateMeetingInfo, addParticipants, setDisplayAppBar } = props;
     const [loader, setLoader] = React.useState(true);
     const [isMeetingValid, setMeetingValid] = React.useState(false);
     const [isHost, setHost] = React.useState(false);
@@ -65,7 +70,7 @@ const InitializeMeeting = props => {
             const uId = localStorage.getItem(meetingId);
             updateMeetingInfo({ meetingId });
             try {
-                let resp = await axios.get(`${Config.apiUrl}getUserInfo?userId=${uId}&meetingId=${meetingId}`);
+                let resp = await CONFIGS.API.get(`/meetings/getUserInfo?userId=${uId}&meetingId=${meetingId}`);
                 if (resp.data.status) {
                     let userInfo = resp.data.userInfo;
                     setHost(userInfo.isHost);
@@ -97,7 +102,7 @@ const InitializeMeeting = props => {
 
     const createSocket = (roomId, userId, username) => {
         let time = Date.now();
-        let newSocket = io(`${Config.apiUrl}${roomId}`, {
+        let newSocket = io(`${process.env.REACT_APP_API_URL}/${roomId}`, {
             query: { roomId, userId, time }
         });
         newSocket.on('connect', () => {
@@ -121,6 +126,7 @@ const InitializeMeeting = props => {
                 updateMeetingInfo({
                     roomId, roomKey, userId, username, isHost, status: true
                 });
+                setDisplayAppBar(false);
                 setTimeout(() => {
                     setMeetingValid(() => { 
                         return true;
@@ -134,12 +140,16 @@ const InitializeMeeting = props => {
         let count = 0;
         let INTERVAL = setInterval(async () => {
             try {
-                let resp = await axios.get(`${Config.apiUrl}checkReqStatus?guestId=${guestObj.guestId}&meetingId=${meetingInfo.meetingId}`);
+                let resp = await CONFIGS.API.get(`/meetings/checkReqStatus?guestId=${guestObj.guestId}&meetingId=${meetingInfo.meetingId}`);
                 if (resp.data.status) {
                     clearInterval(INTERVAL);
                     setRoomId(resp.data.roomId);
                     setHost(false);
+                    if(CONFIGS.isSignedIn())
+                        setUsername(CONFIGS.getUsername());
+                    const token = localStorage.getItem('token');
                     localStorage.clear();
+                    localStorage.setItem('token', token);
                     localStorage.setItem(meetingInfo.meetingId, resp.data.guestObj.guestId);
                     setUserId(resp.data.guestObj.guestId);
                     setMessage("Joining meeting...");
@@ -160,7 +170,7 @@ const InitializeMeeting = props => {
 
     const joinRoom = async () => {
         try {
-            let resp = await axios.post(Config.apiUrl + 'joinRoom', {
+            let resp = await CONFIGS.API.post('/meetings/joinRoom', {
                 username,
                 meetingId: meetingInfo.meetingId,
                 roomKey: roomKey == "" ? null : roomKey
@@ -168,7 +178,11 @@ const InitializeMeeting = props => {
             if (resp.data.status) {
                 setRoomId(resp.data.data.roomId);
                 setHost(false);
+                if(CONFIGS.isSignedIn())
+                    setUsername(CONFIGS.getUsername());
+                const token = localStorage.getItem('token');
                 localStorage.clear();
+                localStorage.setItem('token', token);
                 localStorage.setItem(meetingInfo.meetingId, resp.data.data.guestObj.guestId);
                 setUserId(resp.data.data.guestObj.guestId);
             } else {
@@ -206,27 +220,30 @@ const InitializeMeeting = props => {
             </>
         }
         {
-            isMeetingValid && !loader && <Meeting history={history} />
+            isMeetingValid && !loader && <Meeting />
         }
         <Dialog open={open && !userId} aria-labelledby="alert-dialog-title2" aria-describedby="alert-dialog-description2">
-            <DialogContent>
+            <DialogContent className={classes.dialog}>
+                <br />
                 <Typography variant="h4" color="error">Join meeting</Typography>
-                <Typography>Enter your Username and optionally a Room Key below to Request / Join.</Typography>
-                <TextField label="Username" placeholder="Username" variant="standard" onChange={($e) => { setUsername($e.target.value) }} />
                 <br />
+                {CONFIGS.isSignedIn() && <><Typography>If you have a Room Key, please enter it below. Else, you can skip.</Typography>
+                <br /></>}
+                {!CONFIGS.isSignedIn() && <><Typography>Enter your Name and optionally a Room Key below to Request / Join.</Typography>
                 <br />
+                <TextField label="Name" placeholder="Name" variant="standard" onChange={($e) => { setUsername($e.target.value) }} />
+                <br />
+                <br /></>}
                 <TextField label="Room Key" placeholder="Leave blank if not having" variant="standard" onChange={($e) => { setRoomKey($e.target.value) }} />
                 <br />
                 <br />
-            </DialogContent>
-            <DialogActions>
-                <Button variant="contained" color="secondary" disabled={username == ""} type="button" onClick={() => {
-                    setMessage("Joining.. please wait...");
+                <div className={classes.alignRight}>
+                <Button variant="contained" color="secondary" disabled={!CONFIGS.isSignedIn() && username == ""} type="button" onClick={() => {
                     setLoader(true);
                     setOpen(false);
                     joinRoom();
-                }}>{roomKey == "" ? "REQUEST" : "JOIN"}</Button>
-            </DialogActions>
+                }}>{roomKey == "" ? "REQUEST" : "JOIN"}</Button></div>
+            </DialogContent>
         </Dialog>
         <Dialog open={isErrorAlert} onClose={() => { setErrorAlert(false) }} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
             <DialogTitle id="alert-dialog-title">Request Timed Out!!!</DialogTitle>

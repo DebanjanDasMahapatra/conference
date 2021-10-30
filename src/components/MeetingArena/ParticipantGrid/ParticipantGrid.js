@@ -56,7 +56,6 @@ const ParticipantGrid = props => {
     const classes = useStyles();
 
     React.useEffect(() => {
-        console.warn(participants)
         setLength(participants.length - 1);
     },[participants]);
 
@@ -65,11 +64,6 @@ const ParticipantGrid = props => {
             participants.map(person => {
                 if (person.guestId != 'everyone')
                     return <Grid item sm={12 / (columns || 1)} key={person.guestId} className={clsx(classes.person, classes[`${rows}_${columns}`])}>
-                        {/* {person.displayPic ? <img
-                            src={`${person.displayPic}?w=164&h=164&fit=crop&auto=format`}
-                            alt={person.guestName}
-                            loading="lazy"
-                        /> :  */}
                         <div className={classes.userNameText}>
                         <Typography>{person.guestName}</Typography>
                         </div>
